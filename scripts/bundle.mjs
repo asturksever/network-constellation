@@ -100,7 +100,11 @@ const logoScript = logos
   ? `<script>window.__NC_LOGOS=${JSON.stringify(logos).replace(/</g, '\\u003c')};</` + `script>\n`
   : '';
 
-const out = `<title>Network Constellation</title>
+// The Artifact wrapper supplies a charset, but a file opened straight off disk
+// has none — and without it every em-dash and ellipsis in the UI turns to
+// mojibake. Emit our own so the standalone build is correct anywhere.
+const out = `<meta charset="utf-8">
+<title>Network Constellation</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500&display=swap">
 <style>
 ${css}

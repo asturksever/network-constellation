@@ -4,6 +4,7 @@
   "description": "A 3D force-directed view of a LinkedIn following, clustered by what people do.",
   "type": "module",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "data": "node scripts/build-data.mjs",
     "dev": "python3 -m http.server 8080",

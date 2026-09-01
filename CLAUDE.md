@@ -33,6 +33,7 @@ src/logos.js          employer logos projected from 3D, sized by headcount
 src/ui.js             control panel, tooltip, status line
 src/main.js           boot: load data -> build world -> wire UI
 scripts/pull-followers.js  paste into the browser console to pull a fresh CSV
+                           (followers only — connections come from the export)
 scripts/build-data.mjs     CSV -> compact graph JSON
 scripts/fetch-logos.mjs    employer name -> domain -> favicon -> logos/
 scripts/bundle.mjs         flatten everything into one publishable HTML
@@ -59,11 +60,27 @@ all. `npm run logos` therefore has to be run by you, in a normal terminal. It is
 also the reason a server can't be started for you: that sandbox is torn down
 with `--die-with-parent` after every command.
 
+**The bundle must carry its own charset.** `bundle.mjs` emits
+`<meta charset="utf-8">` as its first line. The Artifact wrapper supplies one, so
+this looked fine when published and was mojibake for anyone who opened the built
+file off disk. Don't drop it.
+
 **The pull uses a private endpoint.** `scripts/pull-followers.js` calls
 LinkedIn's internal Voyager GraphQL API with the logged-in session cookie. It is
 undocumented and the `queryId` changes without notice. When a pull returns
 nothing, open the followers page, watch the network tab while clicking "Show
 more results", and copy the fresh `queryId` across. Keep the inter-page delay.
+
+## Two input shapes
+
+`build-data.mjs` reads both without a flag: a headline export (Name / Full
+headline / Profile URL) and LinkedIn's own **Connections.csv** from Settings ->
+Get a copy of your data. The official export is what the README leads with — it
+is the user's data by right, needs no session cookie, and cannot break when an
+internal endpoint changes. It carries no headline, so one is composed as
+`Position at Company`, which is exactly the shape `classify.js` reads, and the
+"Notes:" preamble lines are stripped before parsing. Verified byte-identical
+output on the 10,144-row headline export after that change.
 
 ## What the data honestly is
 
@@ -147,5 +164,10 @@ distinctive ones.
 
 ## Housekeeping
 
-`data/` is gitignored — it holds real people's names and profile URLs. Keep it
-that way. `dist/` is gitignored too; the bundle is a build product.
+`data/` is gitignored as a whole directory (with `.gitkeep` re-included), not as
+a list of filenames — a stray export dropped there under any name must not be
+committable. `logos/`, `dist/`, `*.csv`, `*.xlsx`, `*.zip` and `.env` are out
+too. `dist/` matters as much as `data/`: the bundle has the names inlined.
+
+The history was audited before the repo went to GitHub — no data file, logo or
+session token has ever been committed, so it is safe to flip public.

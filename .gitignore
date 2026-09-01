@@ -1,15 +1,29 @@
 # Personal data — never commit. These are real people's names and profiles.
-data/*.csv
-data/graph-data.json
+# Deliberately the whole directory, not a pattern: a stray export dropped in
+# here under any name must never be committable.
+data/*
+!data/.gitkeep
 
 # Fetched third-party logos (see: npm run logos)
 logos/
 
-# Built single-file artifact
-dist/*.html
+# Built single-file bundle — it has the data inlined, so it is personal too
+dist/
 
 # Optional local copy of the force-graph library (see: npm run vendor)
 vendor/
+
+# Exports and archives that tend to land in a project folder by accident
+*.csv
+*.xlsx
+*.zip
+Connections.csv
+Basic_LinkedInDataExport_*/
+
+# Secrets, should any ever appear
+.env
+.env.*
+*.pem
 
 .DS_Store
 node_modules/
