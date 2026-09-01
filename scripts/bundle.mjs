@@ -20,6 +20,7 @@ const DATA = 'data/graph-data.json';
 
 const MODULE_ORDER = [
   'src/palette.js',
+  'src/ask.js',
   'src/graph.js',
   'src/labels.js',
   'src/logos.js',

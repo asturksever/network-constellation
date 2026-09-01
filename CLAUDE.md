@@ -24,6 +24,7 @@ index.html            markup + the CDN <script> for 3d-force-graph
 src/taxonomy.js       the classification rules — edit here when a bucket is wrong
 src/classify.js       headline -> {role, company, seniority, domain, domains, tier}
 src/csv.js            dependency-free CSV parse/serialise
+src/ask.js            question -> structured filter -> ranked shortlist (see docs/)
 src/palette.js        OKLCH colour generation — the domain hues and seniority ramp
 src/graph.js          node/link model, force-graph setup, camera framing
 src/labels.js         domain labels projected from 3D, with collision culling
@@ -103,6 +104,19 @@ more results", and copy the fresh `queryId` across. Keep the inter-page delay.
   text, no extra library, and collision culling keeps the middle readable.
 - Camera framing is percentile-based (93rd for the whole graph, 90th for a
   cluster) so a few outliers can't push the view into the next county.
+
+## Ask your graph
+
+`src/ask.js` resolves a natural-language question to a structured filter and runs
+it locally — no model, no API key, 140 ms over 10k people. It works because
+`taxonomy.js` is bidirectional: the regexes that classify headlines also parse
+questions. An LLM is an optional layer over the ~20 survivors, never a dependency.
+Design note and measured results: `docs/ask-your-graph.md`.
+
+Two things there are load-bearing and easy to undo by accident. Subject domains
+and `FUNCTION_DOMAINS` are intersected, not unioned — union returns every
+salesperson you know. And free terms are IDF-weighted, or common words bury the
+distinctive ones.
 
 ## Roadmap
 
