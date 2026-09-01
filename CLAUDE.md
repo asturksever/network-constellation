@@ -28,6 +28,7 @@ src/ask.js            question -> structured filter -> ranked shortlist (see doc
 src/palette.js        OKLCH colour generation — the domain hues and seniority ramp
 src/graph.js          node/link model, force-graph setup, camera framing
 src/labels.js         domain labels projected from 3D, with collision culling
+src/highlight.js      the search-hit marker: ping, reticle and card, projected too
 src/logos.js          employer logos projected from 3D, sized by headcount
 src/ui.js             control panel, tooltip, status line
 src/main.js           boot: load data -> build world -> wire UI
@@ -102,6 +103,17 @@ more results", and copy the fresh `queryId` across. Keep the inter-page delay.
   scene read as coloured light rather than a grey web with coloured dots.
 - Domain labels are HTML projected via `graph2ScreenCoords`, not sprites — crisp
   text, no extra library, and collision culling keeps the middle readable.
+- A search hit has to announce itself. One person is a 0.55-unit dot in ten
+  thousand, so finding one turns the node white-hot (nothing else in the scene
+  reaches that value — the employer hubs own the warm end), lights its two
+  spokes gold, swoops the camera in two stages rather than cutting, and locks an
+  HTML marker onto its projected position: sonar ping, targeting reticle, and a
+  card that opens the profile. Enter steps through the other matches. The marker
+  is HTML on purpose — a hit can be occluded by geometry in front of it, and the
+  overlay is the thing that can never be hidden.
+- `setHit` clears `wantFrame`, and `onSettle` skips re-framing while a hit is
+  live. Without both, the engine's settle would yank the camera off the person
+  you just searched for.
 - Camera framing is percentile-based (93rd for the whole graph, 90th for a
   cluster) so a few outliers can't push the view into the next county.
 

@@ -1,5 +1,6 @@
 import { createConstellation, PALETTE } from './graph.js';
 import { createLabels } from './labels.js';
+import { createHighlight } from './highlight.js';
 import { createLogos } from './logos.js';
 import { wireUI } from './ui.js';
 
@@ -25,7 +26,8 @@ const boot = async () => {
   const world = createConstellation(document.getElementById('scene'), D, { rootLabel: 'You' });
   world.PALETTE = PALETTE;
 
-  const ui = wireUI(world, D);
+  const marker = createHighlight(document.getElementById('labels'), world, D);
+  const ui = wireUI(world, D, marker);
   createLabels(document.getElementById('labels'), world, D);
 
   const logoSources = await loadLogos();

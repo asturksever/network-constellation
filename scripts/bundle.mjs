@@ -23,6 +23,7 @@ const MODULE_ORDER = [
   'src/ask.js',
   'src/graph.js',
   'src/labels.js',
+  'src/highlight.js',
   'src/logos.js',
   'src/ui.js',
   'src/main.js'

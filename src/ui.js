@@ -5,7 +5,7 @@ const fmt = n => n.toLocaleString('en-GB');
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const $ = id => document.getElementById(id);
 
-export function wireUI(world, D) {
+export function wireUI(world, D, hit) {
   /* ---- tooltip ---- */
   const tip = $('tip');
   const scene = $('scene');
@@ -77,23 +77,61 @@ export function wireUI(world, D) {
     say('Settling...');
   });
 
-  /* ---- search ---- */
+  /* ---- search ----
+     A hit is one dot in ten thousand, so finding it has to announce itself:
+     the node burns hot, its two spokes light up, and the marker overlay locks
+     on. Enter steps through the rest of the matches. */
   const search = $('search');
   let timer = null;
+  let matches = [];
+  let at = 0;
+
+  function land(n) {
+    world.setHit(n);
+    if (!world.isVisible(n)) {
+      // the person is filtered out of the scene — put them back before flying
+      segButtons.forEach(o => o.setAttribute('aria-pressed', String(o.dataset.d === 'all')));
+      world.setDensity('all');
+      setTimeout(() => { if (world.hit === n) { world.swoopTo(n); hit.show(n); } }, 420);
+    } else {
+      world.swoopTo(n);
+      hit.show(n);
+    }
+    say(n.name + (matches.length > 1
+      ? `  ·  ${at + 1} of ${matches.length}, Enter for next`
+      : '  ·  found'));
+  }
+
+  function clearHit() {
+    matches = [];
+    at = 0;
+    world.setHit(null);
+    hit.clear();
+  }
+
   search.addEventListener('input', () => {
     clearTimeout(timer);
+    const q = search.value.trim();
+    if (q.length < 2) { clearHit(); return; }
     timer = setTimeout(() => {
-      const hit = world.findPerson(search.value);
-      if (!hit || hit.x === undefined) return;
-      if (!world.isVisible(hit)) {
-        segButtons.forEach(o => o.setAttribute('aria-pressed', String(o.dataset.d === 'all')));
-        world.setDensity('all');
-        setTimeout(() => world.flyTo(hit), 400);
-      } else {
-        world.flyTo(hit);
-      }
-      say('Found ' + hit.name);
-    }, 260);
+      matches = world.findPeople(q).filter(n => n.x !== undefined);
+      at = 0;
+      if (!matches.length) { clearHit(); say('No one here matches "' + q + '"'); return; }
+      land(matches[0]);
+    }, 240);
+  });
+
+  search.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && matches.length > 1) {
+      e.preventDefault();
+      at = (at + (e.shiftKey ? matches.length - 1 : 1)) % matches.length;
+      land(matches[at]);
+    }
+    if (e.key === 'Escape') { search.value = ''; clearHit(); search.blur(); }
+  });
+
+  addEventListener('keydown', e => {
+    if (e.key === 'Escape' && world.hit) { search.value = ''; clearHit(); }
   });
 
   /* ---- legend ---- */
@@ -148,7 +186,8 @@ export function wireUI(world, D) {
     $('nDom').textContent = fmt(D.doms.length);
     $('nComp').textContent = fmt(s.comps);
   });
-  world.onSettle(n => say('Settled - ' + fmt(n) + ' nodes'));
+  // a settle message must not stomp on 'found X' while a hit is on screen
+  world.onSettle(n => { if (!world.hit) say('Settled - ' + fmt(n) + ' nodes'); });
 
   addEventListener('resize', () => world.graph.width(innerWidth).height(innerHeight));
 

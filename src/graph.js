@@ -21,7 +21,12 @@ export const PALETTE = {
   unplaced: '#5d6772',
   ghost: '#212830',
   isolate: '#4d9bff',
-  spine: 'rgba(238,242,245,0.035)'
+  spine: 'rgba(238,242,245,0.035)',
+  // The search hit. The scene is full of warm employer hubs, so the hit goes
+  // white-hot instead — the one value nothing else here reaches — and the gold
+  // belongs to the marker drawn around it.
+  hit: '#ffffff',
+  hitLink: 'rgba(255, 209, 102, 0.9)'
 };
 
 const UNPLACED_DOMAINS = new Set(['Other', 'No headline']);
@@ -76,6 +81,10 @@ export function createConstellation(el, D, opts = {}) {
 
   const state = { density: 'all', isolate: -1, showComp: true, colorBy: 'domain' };
 
+  // the current search hit, if any — drawn hot and fat so it cannot be missed
+  let hitNode = null;
+  const HIT_VAL = 8;      // ~2.5x a person's radius — spotted, not a wall
+
   const isVisible = n => {
     if (n.t !== 'p') return true;
     if (state.density === 'hubs') return false;
@@ -117,6 +126,7 @@ export function createConstellation(el, D, opts = {}) {
   }
 
   const nodeColor = n => {
+    if (n === hitNode) return PALETTE.hit;
     if (state.isolate < 0) return baseColor(n);
     if (n.t === 'root') return PALETTE.root;
     if (n.di === state.isolate) {
@@ -125,12 +135,16 @@ export function createConstellation(el, D, opts = {}) {
     return PALETTE.ghost;
   };
 
+  const nodeVal = n => (n === hitNode ? HIT_VAL : n.val);
+
   // Tinting each spoke with its own cluster's hue is what turns the scene from
   // a grey web with coloured dots into something that reads as coloured light.
   const domLink = domColor.map(c => fade(c, 0.13));
   const isoLink = domColor.map(c => fade(c, 0.34));
 
   const linkColor = l => {
+    // the hit's two spokes trace it back to its domain and its employer
+    if (hitNode && (l.source === hitNode || l.target === hitNode)) return PALETTE.hitLink;
     const di = l.source?.di ?? l.target?.di;
     if (state.isolate >= 0) {
       return di === state.isolate ? isoLink[di] : 'rgba(238,242,245,0.018)';
@@ -146,7 +160,7 @@ export function createConstellation(el, D, opts = {}) {
     .showNavInfo(false)
     .nodeRelSize(3.4)
     .nodeResolution(6)
-    .nodeVal('val')
+    .nodeVal(nodeVal)
     .nodeColor(nodeColor)
     .nodeOpacity(0.92)
     .nodeLabel(() => '')
@@ -160,7 +174,7 @@ export function createConstellation(el, D, opts = {}) {
   G.d3Force('charge').strength(-38).distanceMax(340);
   G.d3Force('link').distance(l => (l.k === 'spine' ? 130 : l.k === 'comp' ? 34 : 22));
 
-  const repaint = () => { G.nodeColor(nodeColor).linkColor(linkColor); };
+  const repaint = () => { G.nodeColor(nodeColor).nodeVal(nodeVal).linkColor(linkColor); };
 
   /** Pull the camera back until the whole graph is in frame. */
   function frameGraph(ms = 900) {
@@ -187,10 +201,20 @@ export function createConstellation(el, D, opts = {}) {
       { x: c.x + c.x / r * dist, y: c.y + c.y / r * dist, z: c.z + c.z / r * dist }, c, 950);
   }
 
-  function flyTo(n, dist = 90) {
+  function flyTo(n, dist = 90, ms = 900) {
     const r = Math.hypot(n.x, n.y, n.z) || 1;
     G.cameraPosition(
-      { x: n.x * (1 + dist / r), y: n.y * (1 + dist / r), z: n.z * (1 + dist / r) }, n, 900);
+      { x: n.x * (1 + dist / r), y: n.y * (1 + dist / r), z: n.z * (1 + dist / r) }, n, ms);
+  }
+
+  /**
+   * A swoop rather than a straight cut: pull out to a wide shot on the target
+   * first, then close in. The two moves together read as "there it is", where a
+   * single jump just teleports you somewhere that looks like everywhere else.
+   */
+  function swoopTo(n, dist = 150) {
+    flyTo(n, Math.max(dist * 3.6, 520), 520);
+    setTimeout(() => { if (n === hitNode) flyTo(n, dist, 780); }, 540);
   }
 
   let wantFrame = true;
@@ -222,33 +246,47 @@ export function createConstellation(el, D, opts = {}) {
     frameGraph,
     frameCluster,
     flyTo,
+    swoopTo,
     isVisible,
     onStats(fn) { onStats = fn; },
     onSettle(fn) {
       G.onEngineStop(() => {
-        if (wantFrame) { wantFrame = false; frameGraph(900); }
+        // never yank the camera off a search hit to re-frame the whole graph
+        if (wantFrame && !hitNode) { wantFrame = false; frameGraph(900); }
         fn(G.graphData().nodes.length);
       });
     },
     setDensity(d) { state.density = d; apply(); },
     setShowComp(v) { state.showComp = v; apply(); },
     setColorBy(mode) { state.colorBy = mode; repaint(); },
+    get hit() { return hitNode; },
+    setHit(n) { hitNode = n || null; if (hitNode) wantFrame = false; repaint(); },
     setIsolate(di) {
       state.isolate = di;
       repaint();
       if (di >= 0) frameCluster(di); else frameGraph(800);
     },
-    findPerson(q) {
+    /**
+     * Every match, best first: whole-name prefix, then any-word prefix, then
+     * anywhere in the name. Ties break on the shorter name, so "Ada Lovelace"
+     * outranks "Adalberto Lovelace-Mendoza" for the query "ada".
+     */
+    findPeople(q, limit = 40) {
       const s = q.trim().toLowerCase();
-      if (s.length < 3) return null;
-      let loose = null;
+      if (s.length < 2) return [];
+      const out = [];
       for (const n of allNodes) {
         if (n.t !== 'p') continue;
         const name = n.name.toLowerCase();
-        if (name.startsWith(s)) return n;
-        if (!loose && name.includes(s)) loose = n;
+        let rank = -1;
+        if (name.startsWith(s)) rank = 0;
+        else if (name.split(/\s+/).some(w => w.startsWith(s))) rank = 1;
+        else if (name.includes(s)) rank = 2;
+        if (rank >= 0) out.push({ n, rank });
       }
-      return loose;
-    }
+      out.sort((a, b) => a.rank - b.rank || a.n.name.length - b.n.name.length);
+      return out.slice(0, limit).map(o => o.n);
+    },
+    findPerson(q) { return this.findPeople(q, 1)[0] || null; }
   };
 }
