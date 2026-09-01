@@ -1,0 +1,13 @@
+{
+  "name": "network-constellation",
+  "version": "0.1.0",
+  "description": "A 3D force-directed view of a LinkedIn following, clustered by what people do.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "data": "node scripts/build-data.mjs",
+    "dev": "python3 -m http.server 8080",
+    "bundle": "node scripts/bundle.mjs",
+    "vendor": "curl -sL https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js -o vendor/3d-force-graph.min.js"
+  }
+}

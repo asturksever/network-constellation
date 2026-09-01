@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network Constellation</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+
+<div id="scene"></div>
+<div id="labels"></div>
+
+<div class="panel" id="ctl">
+  <h1>Network Constellation</h1>
+  <p class="sub">Your LinkedIn following, pulled together by what people do. Drag to orbit, scroll to zoom, click a person to open their profile.</p>
+
+  <div class="grp">
+    <span class="lab">Who's in the scene</span>
+    <div class="seg" role="group" aria-label="Density">
+      <button data-d="all" aria-pressed="true">Everyone</button>
+      <button data-d="senior" aria-pressed="false">Senior</button>
+      <button data-d="hubs" aria-pressed="false">Hubs</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <span class="lab">Isolate a domain</span>
+    <select id="domSel" aria-label="Isolate a domain">
+      <option value="-1">None — show all</option>
+    </select>
+  </div>
+
+  <div class="grp">
+    <span class="lab">Find a person</span>
+    <input type="search" id="search" placeholder="Type a name…" autocomplete="off">
+  </div>
+
+  <div class="grp">
+    <label class="chk">
+      <input type="checkbox" id="compToggle" checked> Link people to shared employers
+    </label>
+  </div>
+
+  <div class="grp">
+    <span class="lab">Colour</span>
+    <div class="legend" id="legend"></div>
+  </div>
+</div>
+
+<div class="panel" id="meta">
+  <span class="lab">In view</span>
+  <div class="stat"><span class="stat-k">Nodes</span><span class="stat-v" id="nNodes">—</span></div>
+  <div class="stat"><span class="stat-k">Links</span><span class="stat-v" id="nLinks">—</span></div>
+  <div class="stat"><span class="stat-k">People</span><span class="stat-v" id="nPeople">—</span></div>
+  <div class="stat"><span class="stat-k">Domains</span><span class="stat-v" id="nDom">—</span></div>
+  <div class="stat"><span class="stat-k">Employers</span><span class="stat-v" id="nComp">—</span></div>
+  <div class="stat"><span class="stat-k">Pulled</span><span class="stat-v" id="genDate">—</span></div>
+</div>
+
+<div id="tip"></div>
+<div id="status">Loading…</div>
+<p id="note">Edges join a person to their domain and to an employer named by two or more people. They are <strong>not</strong> connections between followers — LinkedIn doesn't expose those.</p>
+
+<script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js"></script>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

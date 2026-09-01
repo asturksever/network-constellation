@@ -1,0 +1,222 @@
+// The scene: turns the compact data file into nodes and links, owns the
+// force-graph instance, and exposes the handful of things the UI can change.
+//
+// Node kinds
+//   root  a single node for the account everyone follows
+//   dom   one per domain, the gravity well its people fall into
+//   comp  one per employer named by MIN_COMPANY_SIZE+ people
+//   p     one per person
+//
+// Links are person->domain and person->employer. They are memberships, NOT
+// relationships between people: LinkedIn does not expose who follows whom.
+
+export const PALETTE = {
+  // validated as an all-pairs categorical trio against the #080b0e ground
+  series: ['#3987e5', '#d95926', '#199e70'],
+  root: '#eef2f5',
+  person: '#5b6874',
+  domHub: '#93a2ad',
+  compHub: '#77858f',
+  ghost: '#232a31',
+  isolateHub: '#5fa3ef'
+};
+
+export function createConstellation(el, D, opts = {}) {
+  const ROOT_ID = 0;
+  const DOM0 = 1;
+  const COMP0 = DOM0 + D.doms.length;
+  const PPL0 = COMP0 + D.comps.length;
+
+  // the three largest real domains carry a hue; the tail stays neutral, so the
+  // scene never needs more categorical colours than the eye can separate
+  const top3 = [];
+  for (let i = 0; i < D.doms.length && top3.length < 3; i++) {
+    if (D.doms[i] !== 'Other' && D.doms[i] !== 'No headline') top3.push(i);
+  }
+  const hueOf = {};
+  top3.forEach((di, k) => { hueOf[di] = PALETTE.series[k]; });
+
+  const allNodes = [];
+  const allLinks = [];
+
+  allNodes.push({ id: ROOT_ID, t: 'root', name: opts.rootLabel || 'You', val: 148, col: PALETTE.root });
+
+  D.doms.forEach((name, i) => {
+    allNodes.push({
+      id: DOM0 + i, t: 'dom', di: i, name, count: D.domCounts[i],
+      val: 18 + D.domCounts[i] / 33, col: hueOf[i] || PALETTE.domHub
+    });
+    allLinks.push({ source: DOM0 + i, target: ROOT_ID, k: 'spine' });
+  });
+
+  D.comps.forEach((name, i) => {
+    allNodes.push({
+      id: COMP0 + i, t: 'comp', name, count: D.compCounts[i],
+      val: 1.6 + D.compCounts[i] / 12, col: PALETTE.compHub
+    });
+  });
+
+  D.people.forEach((p, i) => {
+    const id = PPL0 + i;
+    allNodes.push({
+      id, t: 'p', name: p[0], role: p[1], ci: p[2], di: p[3], si: p[4],
+      slug: p[5], freeComp: p[6], val: 0.55, col: hueOf[p[3]] || PALETTE.person
+    });
+    allLinks.push({ source: id, target: DOM0 + p[3], k: 'dom' });
+    if (p[2] >= 0) allLinks.push({ source: id, target: COMP0 + p[2], k: 'comp' });
+  });
+
+  const state = { density: 'all', isolate: -1, showComp: true };
+
+  const isVisible = n => {
+    if (n.t !== 'p') return true;
+    if (state.density === 'hubs') return false;
+    if (state.density === 'senior' && n.si > 1) return false;
+    return true;
+  };
+
+  function build() {
+    const keep = new Set();
+    let nodes = [];
+    for (const n of allNodes) if (isVisible(n)) { keep.add(n.id); nodes.push(n); }
+
+    const idOf = v => (typeof v === 'object' ? v.id : v);
+    const links = allLinks.filter(l => {
+      if (l.k === 'comp' && !state.showComp) return false;
+      return keep.has(idOf(l.source)) && keep.has(idOf(l.target));
+    });
+
+    // an employer hub with nobody left attached is just a floating dot
+    if (state.density !== 'all' || !state.showComp) {
+      const used = new Set();
+      for (const l of links) {
+        const t = idOf(l.target);
+        if (t >= COMP0 && t < PPL0) used.add(t);
+      }
+      nodes = nodes.filter(n => n.t !== 'comp' || used.has(n.id));
+    }
+    return { nodes, links };
+  }
+
+  const nodeColor = n => {
+    if (state.isolate < 0) return n.col;
+    if (n.t === 'root') return PALETTE.root;
+    if (n.di === state.isolate) return n.t === 'dom' ? PALETTE.isolateHub : PALETTE.series[0];
+    return PALETTE.ghost;
+  };
+
+  const linkColor = l => {
+    if (state.isolate >= 0) {
+      const hit = l.source?.di === state.isolate || l.target?.di === state.isolate;
+      return hit ? 'rgba(57,135,229,0.30)' : 'rgba(238,242,245,0.022)';
+    }
+    return l.k === 'comp' ? 'rgba(217,89,38,0.13)' : 'rgba(238,242,245,0.055)';
+  };
+
+  const G = ForceGraph3D()(el)
+    .backgroundColor('#080b0e')
+    .showNavInfo(false)
+    .nodeRelSize(3.4)
+    .nodeResolution(6)
+    .nodeVal('val')
+    .nodeColor(nodeColor)
+    .nodeOpacity(0.92)
+    .nodeLabel(() => '')
+    .linkColor(linkColor)
+    .linkWidth(0)
+    .linkOpacity(1)
+    .enableNodeDrag(false)
+    .cooldownTicks(170)
+    .warmupTicks(8);
+
+  G.d3Force('charge').strength(-38).distanceMax(340);
+  G.d3Force('link').distance(l => (l.k === 'spine' ? 130 : l.k === 'comp' ? 34 : 22));
+
+  const repaint = () => { G.nodeColor(nodeColor).linkColor(linkColor); };
+
+  /** Pull the camera back until the whole graph is in frame. */
+  function frameGraph(ms = 900) {
+    const rs = G.graphData().nodes
+      .filter(n => n.x !== undefined)
+      .map(n => Math.hypot(n.x, n.y, n.z))
+      .sort((a, b) => a - b);
+    if (!rs.length) return;
+    const r = rs[Math.floor(rs.length * 0.93)] || rs[rs.length - 1];
+    G.cameraPosition({ x: 0, y: 0, z: Math.max(260, r * 2.15) }, { x: 0, y: 0, z: 0 }, ms);
+  }
+
+  /** Frame one domain by its own spread, so the camera never lands inside it. */
+  function frameCluster(di) {
+    const pts = allNodes.filter(n =>
+      n.di === di && n.x !== undefined && (n.t !== 'p' || isVisible(n)));
+    if (!pts.length) return;
+    const c = pts.reduce((a, n) => ({ x: a.x + n.x, y: a.y + n.y, z: a.z + n.z }), { x: 0, y: 0, z: 0 });
+    c.x /= pts.length; c.y /= pts.length; c.z /= pts.length;
+    const ds = pts.map(n => Math.hypot(n.x - c.x, n.y - c.y, n.z - c.z)).sort((a, b) => a - b);
+    const dist = Math.max(230, (ds[Math.floor(ds.length * 0.9)] || 90) * 2.8);
+    const r = Math.hypot(c.x, c.y, c.z) || 1;
+    G.cameraPosition(
+      { x: c.x + c.x / r * dist, y: c.y + c.y / r * dist, z: c.z + c.z / r * dist }, c, 950);
+  }
+
+  function flyTo(n, dist = 90) {
+    const r = Math.hypot(n.x, n.y, n.z) || 1;
+    G.cameraPosition(
+      { x: n.x * (1 + dist / r), y: n.y * (1 + dist / r), z: n.z * (1 + dist / r) }, n, 900);
+  }
+
+  let wantFrame = true;
+  let onStats = () => {};
+
+  function apply() {
+    const g = build();
+    G.graphData(g);
+    wantFrame = true;
+    onStats({
+      nodes: g.nodes.length,
+      links: g.links.length,
+      people: g.nodes.filter(n => n.t === 'p').length,
+      comps: g.nodes.filter(n => n.t === 'comp').length
+    });
+  }
+
+  return {
+    graph: G,
+    nodes: allNodes,
+    DOM0, COMP0, PPL0,
+    top3,
+    state,
+    apply,
+    repaint,
+    frameGraph,
+    frameCluster,
+    flyTo,
+    isVisible,
+    onStats(fn) { onStats = fn; },
+    onSettle(fn) {
+      G.onEngineStop(() => {
+        if (wantFrame) { wantFrame = false; frameGraph(900); }
+        fn(G.graphData().nodes.length);
+      });
+    },
+    setDensity(d) { state.density = d; apply(); },
+    setShowComp(v) { state.showComp = v; apply(); },
+    setIsolate(di) {
+      state.isolate = di;
+      repaint();
+      if (di >= 0) frameCluster(di); else frameGraph(800);
+    },
+    findPerson(q) {
+      const s = q.trim().toLowerCase();
+      if (s.length < 3) return null;
+      let loose = null;
+      for (const n of allNodes) {
+        if (n.t !== 'p') continue;
+        const name = n.name.toLowerCase();
+        if (name.startsWith(s)) return n;
+        if (!loose && name.includes(s)) loose = n;
+      }
+      return loose;
+    }
+  };
+}

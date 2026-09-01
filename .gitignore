@@ -1,0 +1,12 @@
+# Personal data — never commit. These are real people's names and profiles.
+data/*.csv
+data/graph-data.json
+
+# Built single-file artifact
+dist/*.html
+
+# Optional local copy of the force-graph library (see: npm run vendor)
+vendor/
+
+.DS_Store
+node_modules/
