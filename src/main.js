@@ -1,5 +1,6 @@
 import { createConstellation, PALETTE } from './graph.js';
 import { createLabels } from './labels.js';
+import { createLogos } from './logos.js';
 import { wireUI } from './ui.js';
 
 const DATA_URL = 'data/graph-data.json';
@@ -22,19 +23,44 @@ const boot = async () => {
   }
 
   const world = createConstellation(document.getElementById('scene'), D, { rootLabel: 'You' });
-  // small conveniences the UI layer reads without importing the palette
   world.PALETTE = PALETTE;
-  world.series = PALETTE.series;
-  world.personColor = PALETTE.person;
-  world.compColor = PALETTE.compHub;
 
-  wireUI(world, D);
+  const ui = wireUI(world, D);
   createLabels(document.getElementById('labels'), world, D);
+
+  const logoSources = await loadLogos();
+  const logos = createLogos(document.getElementById('labels'), world, D, logoSources);
+  const logoToggle = document.getElementById('logoToggle');
+  if (logos.count) {
+    logoToggle.addEventListener('change', e => logos.setEnabled(e.target.checked));
+  } else {
+    logoToggle.checked = false;
+    logoToggle.disabled = true;
+    logoToggle.closest('.chk').title = 'No logos yet — run: npm run logos';
+  }
 
   world.apply();
   world.graph.cameraPosition({ x: 0, y: 0, z: 2400 });
 
   document.getElementById('genDate').textContent = D.generatedAt || '';
 };
+
+/**
+ * The bundle inlines logos as data URIs (an Artifact's CSP blocks every external
+ * image, so nothing else would load there). In dev they come off disk.
+ */
+async function loadLogos() {
+  if (window.__NC_LOGOS) return window.__NC_LOGOS;
+  try {
+    const res = await fetch('logos/manifest.json');
+    if (!res.ok) return {};
+    const manifest = await res.json();
+    return Object.fromEntries(
+      Object.entries(manifest).map(([name, file]) => [name, 'logos/' + file])
+    );
+  } catch {
+    return {};   // no logos fetched yet — the graph just shows spheres
+  }
+}
 
 boot();

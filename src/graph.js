@@ -10,16 +10,21 @@
 // Links are person->domain and person->employer. They are memberships, NOT
 // relationships between people: LinkedIn does not expose who follows whom.
 
+import { domainHues, seniorityRamp, fade, mix } from './palette.js';
+
 export const PALETTE = {
-  // validated as an all-pairs categorical trio against the #080b0e ground
-  series: ['#3987e5', '#d95926', '#199e70'],
-  root: '#eef2f5',
-  person: '#5b6874',
-  domHub: '#93a2ad',
-  compHub: '#77858f',
-  ghost: '#232a31',
-  isolateHub: '#5fa3ef'
+  root: '#f2f6fa',
+  // employer hubs stay achromatic-warm so node KIND never reads as a domain hue
+  compHub: '#cbb89a',
+  compLink: 'rgba(226, 208, 178, 0.16)',
+  // the two buckets that mean "we could not place this person" stay grey on purpose
+  unplaced: '#5d6772',
+  ghost: '#212830',
+  isolate: '#4d9bff',
+  spine: 'rgba(238,242,245,0.035)'
 };
+
+const UNPLACED_DOMAINS = new Set(['Other', 'No headline']);
 
 export function createConstellation(el, D, opts = {}) {
   const ROOT_ID = 0;
@@ -27,14 +32,17 @@ export function createConstellation(el, D, opts = {}) {
   const COMP0 = DOM0 + D.doms.length;
   const PPL0 = COMP0 + D.comps.length;
 
-  // the three largest real domains carry a hue; the tail stays neutral, so the
-  // scene never needs more categorical colours than the eye can separate
-  const top3 = [];
-  for (let i = 0; i < D.doms.length && top3.length < 3; i++) {
-    if (D.doms[i] !== 'Other' && D.doms[i] !== 'No headline') top3.push(i);
-  }
-  const hueOf = {};
-  top3.forEach((di, k) => { hueOf[di] = PALETTE.series[k]; });
+  // Every placeable domain gets its own hue, assigned largest-first so the
+  // biggest lobes land furthest apart on the wheel. 'Other' and 'No headline'
+  // stay grey — that greyness is information, not a leftover.
+  const placeable = D.doms.map((n, i) => i).filter(i => !UNPLACED_DOMAINS.has(D.doms[i]));
+  const hues = domainHues(placeable.length);
+  const domColor = D.doms.map(() => PALETTE.unplaced);
+  placeable.forEach((di, k) => { domColor[di] = hues[k]; });
+
+  const senColor = seniorityRamp();
+  // hubs read as a brighter core of their own cluster
+  const hubColor = domColor.map(c => mix(c, '#ffffff', 0.34));
 
   const allNodes = [];
   const allLinks = [];
@@ -44,7 +52,7 @@ export function createConstellation(el, D, opts = {}) {
   D.doms.forEach((name, i) => {
     allNodes.push({
       id: DOM0 + i, t: 'dom', di: i, name, count: D.domCounts[i],
-      val: 18 + D.domCounts[i] / 33, col: hueOf[i] || PALETTE.domHub
+      val: 18 + D.domCounts[i] / 33
     });
     allLinks.push({ source: DOM0 + i, target: ROOT_ID, k: 'spine' });
   });
@@ -52,7 +60,7 @@ export function createConstellation(el, D, opts = {}) {
   D.comps.forEach((name, i) => {
     allNodes.push({
       id: COMP0 + i, t: 'comp', name, count: D.compCounts[i],
-      val: 1.6 + D.compCounts[i] / 12, col: PALETTE.compHub
+      val: 1.6 + D.compCounts[i] / 12
     });
   });
 
@@ -60,13 +68,13 @@ export function createConstellation(el, D, opts = {}) {
     const id = PPL0 + i;
     allNodes.push({
       id, t: 'p', name: p[0], role: p[1], ci: p[2], di: p[3], si: p[4],
-      slug: p[5], freeComp: p[6], val: 0.55, col: hueOf[p[3]] || PALETTE.person
+      slug: p[5], freeComp: p[6], val: 0.55
     });
     allLinks.push({ source: id, target: DOM0 + p[3], k: 'dom' });
     if (p[2] >= 0) allLinks.push({ source: id, target: COMP0 + p[2], k: 'comp' });
   });
 
-  const state = { density: 'all', isolate: -1, showComp: true };
+  const state = { density: 'all', isolate: -1, showComp: true, colorBy: 'domain' };
 
   const isVisible = n => {
     if (n.t !== 'p') return true;
@@ -98,19 +106,39 @@ export function createConstellation(el, D, opts = {}) {
     return { nodes, links };
   }
 
-  const nodeColor = n => {
-    if (state.isolate < 0) return n.col;
+  function baseColor(n) {
     if (n.t === 'root') return PALETTE.root;
-    if (n.di === state.isolate) return n.t === 'dom' ? PALETTE.isolateHub : PALETTE.series[0];
+    if (n.t === 'comp') return PALETTE.compHub;
+    if (state.colorBy === 'seniority') {
+      if (n.t === 'dom') return mix(PALETTE.unplaced, '#ffffff', 0.3);
+      return senColor[n.si];
+    }
+    return n.t === 'dom' ? hubColor[n.di] : domColor[n.di];
+  }
+
+  const nodeColor = n => {
+    if (state.isolate < 0) return baseColor(n);
+    if (n.t === 'root') return PALETTE.root;
+    if (n.di === state.isolate) {
+      return n.t === 'dom' ? mix(domColor[n.di], '#ffffff', 0.45) : domColor[n.di];
+    }
     return PALETTE.ghost;
   };
 
+  // Tinting each spoke with its own cluster's hue is what turns the scene from
+  // a grey web with coloured dots into something that reads as coloured light.
+  const domLink = domColor.map(c => fade(c, 0.13));
+  const isoLink = domColor.map(c => fade(c, 0.34));
+
   const linkColor = l => {
+    const di = l.source?.di ?? l.target?.di;
     if (state.isolate >= 0) {
-      const hit = l.source?.di === state.isolate || l.target?.di === state.isolate;
-      return hit ? 'rgba(57,135,229,0.30)' : 'rgba(238,242,245,0.022)';
+      return di === state.isolate ? isoLink[di] : 'rgba(238,242,245,0.018)';
     }
-    return l.k === 'comp' ? 'rgba(217,89,38,0.13)' : 'rgba(238,242,245,0.055)';
+    if (l.k === 'spine') return PALETTE.spine;
+    if (l.k === 'comp') return PALETTE.compLink;
+    if (state.colorBy === 'seniority') return fade(senColor[l.source?.si ?? 6], 0.11);
+    return di == null ? PALETTE.spine : domLink[di];
   };
 
   const G = ForceGraph3D()(el)
@@ -184,7 +212,10 @@ export function createConstellation(el, D, opts = {}) {
     graph: G,
     nodes: allNodes,
     DOM0, COMP0, PPL0,
-    top3,
+    domColor,
+    hubColor,
+    senColor,
+    placeable,
     state,
     apply,
     repaint,
@@ -201,6 +232,7 @@ export function createConstellation(el, D, opts = {}) {
     },
     setDensity(d) { state.density = d; apply(); },
     setShowComp(v) { state.showComp = v; apply(); },
+    setColorBy(mode) { state.colorBy = mode; repaint(); },
     setIsolate(di) {
       state.isolate = di;
       repaint();

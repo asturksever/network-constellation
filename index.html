@@ -19,10 +19,18 @@
 
   <div class="grp">
     <span class="lab">Who's in the scene</span>
-    <div class="seg" role="group" aria-label="Density">
+    <div class="seg" id="densitySeg" role="group" aria-label="Density">
       <button data-d="all" aria-pressed="true">Everyone</button>
       <button data-d="senior" aria-pressed="false">Senior</button>
       <button data-d="hubs" aria-pressed="false">Hubs</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <span class="lab">Colour by</span>
+    <div class="seg" id="colorSeg" role="group" aria-label="Colour by">
+      <button data-c="domain" aria-pressed="true">Domain</button>
+      <button data-c="seniority" aria-pressed="false">Seniority</button>
     </div>
   </div>
 
@@ -42,10 +50,13 @@
     <label class="chk">
       <input type="checkbox" id="compToggle" checked> Link people to shared employers
     </label>
+    <label class="chk" style="margin-top:9px">
+      <input type="checkbox" id="logoToggle" checked> Show employer logos
+    </label>
   </div>
 
   <div class="grp">
-    <span class="lab">Colour</span>
+    <span class="lab" id="legendLab">Domains</span>
     <div class="legend" id="legend"></div>
   </div>
 </div>

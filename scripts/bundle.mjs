@@ -19,11 +19,41 @@ const OUT = process.argv[2] || 'dist/network-constellation.html';
 const DATA = 'data/graph-data.json';
 
 const MODULE_ORDER = [
+  'src/palette.js',
   'src/graph.js',
   'src/labels.js',
+  'src/logos.js',
   'src/ui.js',
   'src/main.js'
 ];
+
+const LOGO_DIR = 'logos';
+const MIME = { png: 'image/png', jpg: 'image/jpeg', svg: 'image/svg+xml', ico: 'image/x-icon' };
+
+/**
+ * Logos have to travel inside the file. A published Artifact's CSP blocks every
+ * external image, so a src pointing at logos/ or at any CDN silently renders
+ * nothing — data URIs are the only thing that survives.
+ */
+function inlineLogos() {
+  const manifestPath = `${LOGO_DIR}/manifest.json`;
+  if (!existsSync(manifestPath)) return null;
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  const out = {};
+  let bytes = 0;
+  for (const [name, file] of Object.entries(manifest)) {
+    const path = `${LOGO_DIR}/${file}`;
+    if (!existsSync(path)) continue;
+    const buf = readFileSync(path);
+    const ext = file.split('.').pop().toLowerCase();
+    out[name] = `data:${MIME[ext] || 'image/png'};base64,${buf.toString('base64')}`;
+    bytes += buf.length;
+  }
+  const n = Object.keys(out).length;
+  if (!n) return null;
+  console.log(`  inlined ${n} logos (${(bytes / 1024).toFixed(0)} KB)`);
+  return out;
+}
 
 if (!existsSync(DATA)) {
   console.error(`No ${DATA}. Run \`npm run data\` first.`);
@@ -63,6 +93,11 @@ const data = readFileSync(DATA, 'utf8')
   .replace(/\uFFFD/g, '')
   .replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
 
+const logos = inlineLogos();
+const logoScript = logos
+  ? `<script>window.__NC_LOGOS=${JSON.stringify(logos).replace(/</g, '\\u003c')};</` + `script>\n`
+  : '';
+
 const out = `<title>Network Constellation</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500&display=swap">
 <style>
@@ -72,7 +107,7 @@ ${css}
 ${body}
 
 <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js"></script>
-<script type="application/json" id="nc-data">${data}</script>
+${logoScript}<script type="application/json" id="nc-data">${data}</script>
 <script>
 (function () {
 "use strict";

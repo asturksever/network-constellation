@@ -2,6 +2,9 @@
 data/*.csv
 data/graph-data.json
 
+# Fetched third-party logos (see: npm run logos)
+logos/
+
 # Built single-file artifact
 dist/*.html
 

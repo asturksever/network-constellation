@@ -31,16 +31,30 @@ export function wireUI(world, D) {
       window.open('https://www.linkedin.com/in/' + n.slug + '/', '_blank', 'noopener');
       return;
     }
-    if (n.t === 'dom') { $('domSel').value = String(n.di); world.setIsolate(n.di); return; }
+    if (n.t === 'dom') {
+      const next = world.state.isolate === n.di ? -1 : n.di;
+      $('domSel').value = String(next);
+      world.setIsolate(next);
+      markLegend(next);
+      return;
+    }
     world.flyTo(n, n.t === 'comp' ? 130 : 90);
   });
 
   /* ---- density ---- */
-  const segButtons = [...document.querySelectorAll('.seg button')];
+  const segButtons = [...document.querySelectorAll('#densitySeg button')];
   segButtons.forEach(b => b.addEventListener('click', () => {
     segButtons.forEach(o => o.setAttribute('aria-pressed', String(o === b)));
     world.setDensity(b.dataset.d);
     say('Settling...');
+  }));
+
+  /* ---- colour by ---- */
+  const colorButtons = [...document.querySelectorAll('#colorSeg button')];
+  colorButtons.forEach(b => b.addEventListener('click', () => {
+    colorButtons.forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+    world.setColorBy(b.dataset.c);
+    drawLegend(b.dataset.c);
   }));
 
   /* ---- isolate ---- */
@@ -51,7 +65,11 @@ export function wireUI(world, D) {
     o.textContent = `${name}  (${fmt(D.domCounts[i])})`;
     sel.appendChild(o);
   });
-  sel.addEventListener('change', () => world.setIsolate(parseInt(sel.value, 10)));
+  sel.addEventListener('change', () => {
+    const di = parseInt(sel.value, 10);
+    world.setIsolate(di);
+    markLegend(di);
+  });
 
   /* ---- employer links ---- */
   $('compToggle').addEventListener('change', e => {
@@ -80,14 +98,47 @@ export function wireUI(world, D) {
 
   /* ---- legend ---- */
   const legend = $('legend');
-  const { PALETTE } = world;
-  world.top3.forEach((di, k) => {
-    legend.insertAdjacentHTML('beforeend', row(world.series[k], D.doms[di], D.domCounts[di]));
-  });
-  const tailCount = D.total - world.top3.reduce((a, di) => a + D.domCounts[di], 0);
-  legend.insertAdjacentHTML('beforeend',
-    row(world.personColor, `The other ${D.doms.length - 3} domains`, tailCount) +
-    row(world.compColor, 'Employer hub', D.comps.length));
+
+  function drawLegend(mode) {
+    $('legendLab').textContent = mode === 'seniority' ? 'Seniority' : 'Domains';
+    legend.innerHTML = '';
+
+    if (mode === 'seniority') {
+      D.sen.forEach((name, i) => {
+        legend.insertAdjacentHTML('beforeend', row(world.senColor[i], name, D.senCounts[i]));
+      });
+      legend.insertAdjacentHTML('beforeend',
+        row(world.PALETTE.compHub, 'Employer hub', D.comps.length));
+      return;
+    }
+
+    // domains, largest first, each a button that isolates it
+    D.doms.forEach((name, i) => {
+      legend.insertAdjacentHTML('beforeend',
+        row(world.domColor[i], name, D.domCounts[i], i));
+    });
+    legend.insertAdjacentHTML('beforeend',
+      row(world.PALETTE.compHub, 'Employer hub', D.comps.length));
+
+    legend.querySelectorAll('[data-di]').forEach(el => {
+      el.addEventListener('click', () => {
+        const di = parseInt(el.dataset.di, 10);
+        const next = world.state.isolate === di ? -1 : di;
+        sel.value = String(next);
+        world.setIsolate(next);
+        markLegend(next);
+      });
+    });
+    markLegend(world.state.isolate);
+  }
+
+  function markLegend(di) {
+    legend.querySelectorAll('[data-di]').forEach(el => {
+      el.classList.toggle('sel', parseInt(el.dataset.di, 10) === di);
+    });
+  }
+
+  drawLegend('domain');
 
   /* ---- stats + status ---- */
   world.onStats(s => {
@@ -104,9 +155,11 @@ export function wireUI(world, D) {
   return { say };
 }
 
-function row(color, label, count) {
-  return `<div class="lgi"><span class="dot" style="background:${color}"></span>` +
-    `${esc(label)}<span class="lgn">${fmt(count)}</span></div>`;
+function row(color, label, count, di) {
+  const tag = di == null ? 'div' : 'button';
+  const attr = di == null ? '' : ` type="button" data-di="${di}" title="Isolate ${esc(label)}"`;
+  return `<${tag} class="lgi"${attr}><span class="dot" style="background:${color}"></span>` +
+    `<span class="lgi-label">${esc(label)}</span><span class="lgn">${fmt(count)}</span></${tag}>`;
 }
 
 function describe(n, D) {

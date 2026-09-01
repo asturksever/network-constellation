@@ -15,7 +15,10 @@ cp ~/Downloads/linkedin-followers-*.csv data/followers.csv
 # 2. classify it
 npm run data
 
-# 3. look at it
+# 3. optional: employer logos (needs internet; run it in your own terminal)
+npm run logos
+
+# 4. look at it
 npm run dev        # http://localhost:8080
 ```
 
@@ -45,13 +48,21 @@ two or more people, and a single root for the account being followed.
 relationships*: LinkedIn does not expose who follows whom, so this is a map of
 what people have in common rather than who knows whom.
 
-**Colour.** The three largest domains get a hue; the rest stay neutral. That's a
-deliberate limit — colourblind-safe categorical palettes run out at three when
-any two colours can end up adjacent, which is exactly the case in a force graph.
-Use **Isolate a domain** to light up any of the others.
+**Colour.** Every placeable domain gets its own generated hue — golden-angle
+spaced across three lightness bands so the big lobes never collide, and the
+spokes are tinted to match. `Other` and `No headline` stay grey, because that
+grey means "couldn't place these people". Switch **Colour by** to *Seniority* to
+repaint the whole scene by rank instead.
 
-**Controls.** Density (everyone / senior only / hubs only), domain isolation,
-name search, and a toggle for the employer links. Hover for role and employer,
+**Employer logos.** Each employer hub is drawn with its logo, sized by how many
+people named it — Meta at 94 is the largest, and anyone named by fewer than two
+people never becomes a hub at all. Logos fade in as you zoom, and overlapping
+ones give way to the bigger employer. Run `npm run logos` to populate them;
+without it you get plain spheres and nothing breaks.
+
+**Controls.** Density (everyone / senior only / hubs only), colour by domain or
+seniority, domain isolation (also by clicking any legend row), name search, and
+toggles for the employer links and logos. Hover for role and employer,
 click a person to open their profile.
 
 ## Publishing
