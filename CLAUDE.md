@@ -1,6 +1,6 @@
 # Network Constellation — working notes for Claude
 
-A 3D force-directed view of a LinkedIn following, clustered by what people do.
+A 3D force-directed view of your LinkedIn connections, clustered by what people do.
 Static site, no framework, no bundler, no `node_modules`.
 
 **Starting a new iteration? Read [docs/next-iteration.md](docs/next-iteration.md)

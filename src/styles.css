@@ -13,6 +13,7 @@
   --s1: #3987e5;
   --s2: #d95926;
   --s3: #199e70;
+  --hit-gold: #ffd166;
 }
 
 * { box-sizing: border-box; }
@@ -434,3 +435,252 @@ button:focus-visible { outline: 2px solid var(--s1); outline-offset: 1px; }
   letter-spacing: 0.04em;
   color: var(--muted);
 }
+
+/* ---------- landing ---------- */
+/* The scene renders behind this, dimmed: you see what the tool makes before you
+   give it anything. The drop target borrows the search marker's corner
+   brackets, so the same gesture means "this is the thing" in both places. */
+
+#landing {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow-y: auto;
+  background:
+    radial-gradient(120% 90% at 50% 45%, rgba(8, 11, 14, 0.55) 30%, rgba(8, 11, 14, 0.93) 100%);
+  transition: opacity 0.35s;
+}
+#landing.gone { opacity: 0; pointer-events: none; }
+
+.landing-inner {
+  position: relative;
+  min-height: 100%;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 322px 1fr 316px;
+  grid-template-rows: auto 1fr auto;
+  gap: 18px;
+  align-items: start;
+}
+
+.landing-brand { position: static; grid-column: 1; grid-row: 1; padding: 17px; }
+.landing-steps { position: static; grid-column: 3; grid-row: 1; padding: 16px 17px; }
+.landing-privacy { grid-column: 3; grid-row: 3; align-self: end; }
+
+.landing-main {
+  grid-column: 2;
+  grid-row: 1 / 4;
+  align-self: center;
+  justify-self: center;
+  width: min(544px, 100%);
+  padding: 24px 0 40px;
+}
+
+.brandline { display: flex; align-items: center; gap: 9px; }
+.brandline h1 { margin: 0; }
+.mark { display: block; flex: none; }
+
+.pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 13px; }
+.pill {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border: 1px solid var(--hair);
+  border-radius: 3px;
+  padding: 2px 5px;
+}
+
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.steps li { display: flex; gap: 11px; align-items: flex-start; }
+.stepn {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--hit-gold);
+  padding-top: 1px;
+  flex: none;
+}
+.steps div { display: flex; flex-direction: column; gap: 3px; }
+.steph {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.stepb { font-size: 11.5px; line-height: 1.5; color: var(--ink-2); }
+.stepb em { color: var(--ink); font-style: normal; font-weight: 600; }
+
+.landing-privacy {
+  position: static;
+  max-width: none;
+  margin: 0;
+  font-size: 11px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  border-left: 2px solid var(--s2);
+  padding: 10px 13px;
+}
+.landing-privacy strong { color: var(--ink); font-weight: 600; }
+
+/* the drop target */
+#dropzone {
+  position: relative;
+  padding: 46px 32px 40px;
+  border: 1px dashed rgba(255, 209, 102, 0.34);
+  border-radius: 10px;
+  background: radial-gradient(90% 120% at 50% 40%, rgba(255, 209, 102, 0.07), rgba(8, 11, 14, 0.82) 72%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+}
+#dropzone:hover,
+#dropzone:focus-visible,
+#dropzone.over {
+  border-color: rgba(255, 209, 102, 0.72);
+  background: radial-gradient(90% 120% at 50% 40%, rgba(255, 209, 102, 0.13), rgba(8, 11, 14, 0.82) 72%);
+}
+
+/* the search marker's cut corners, reused */
+#dropzone .br {
+  position: absolute;
+  width: 22px; height: 22px;
+  border-left: 1.5px solid var(--hit-gold);
+  border-top: 1.5px solid var(--hit-gold);
+  opacity: 0.85;
+}
+#dropzone .tl { left: -1px; top: -1px; }
+#dropzone .tr { right: -1px; top: -1px; transform: rotate(90deg); }
+#dropzone .br2 { right: -1px; bottom: -1px; transform: rotate(180deg); }
+#dropzone .bl { left: -1px; bottom: -1px; transform: rotate(270deg); }
+
+.dz-title {
+  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  font-weight: 700;
+  font-size: 27px;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.dz-sub { font-size: 13px; color: var(--ink-2); }
+.dz-hint {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.linky {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--hit-gold);
+  border-bottom: 1px solid rgba(255, 209, 102, 0.45);
+  cursor: pointer;
+}
+.linky:hover { color: #ffe0a0; }
+
+.demo { margin: 17px 0 0; text-align: center; font-size: 12px; color: var(--ink-2); }
+
+/* what we read out of the file */
+.landing-state:empty { display: none; }
+.landing-state {
+  margin-top: 17px;
+  background: rgba(17, 22, 27, 0.9);
+  border: 1px solid var(--hair);
+  border-left: 2px solid var(--s1);
+  border-radius: 6px;
+  padding: 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.landing-state.bad { border-left-color: var(--s2); }
+
+.ls-mono {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+.ls-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ls-note { font-size: 11px; line-height: 1.5; color: var(--muted); }
+
+.cols { display: flex; flex-wrap: wrap; gap: 6px; }
+.col {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--ink);
+  border: 1px solid var(--hair);
+  border-radius: 4px;
+  padding: 3px 7px;
+}
+.col-k {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.map { display: flex; flex-direction: column; gap: 7px; }
+.map-row { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 10px; }
+.map-k {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.primary {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1a1205;
+  background: var(--hit-gold);
+  border: 0;
+  border-radius: 5px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.primary:hover { background: #ffe0a0; }
+.primary:disabled { background: var(--panel-2); color: var(--muted); cursor: not-allowed; }
+
+#dataGrp .seg button { cursor: pointer; }
+
+@media (max-width: 1100px) {
+  .landing-inner { grid-template-columns: 1fr; grid-template-rows: auto auto auto auto; }
+  .landing-brand, .landing-steps, .landing-privacy { grid-column: 1; }
+  .landing-brand { grid-row: 1; }
+  .landing-main { grid-column: 1; grid-row: 2; width: 100%; padding: 8px 0 24px; }
+  .landing-steps { grid-row: 3; }
+  .landing-privacy { grid-row: 4; }
+  #dropzone { padding: 32px 20px 28px; }
+  .dz-title { font-size: 21px; }
+  .linky, .primary { min-height: 44px; }
+  .primary { width: 100%; }
+}
+
+/* While the landing is up, the app chrome underneath must not show through it.
+   The scene still does, deliberately — that is the point of the landing. */
+body.landing-up #ctl,
+body.landing-up #meta,
+body.landing-up #tip,
+body.landing-up #status,
+body.landing-up #note { display: none; }

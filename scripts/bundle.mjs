@@ -14,6 +14,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { leanPeople } from '../src/build.js';
 
 const OUT = process.argv[2] || 'dist/network-constellation.html';
 const DATA = 'data/graph-data.json';
@@ -28,12 +29,14 @@ const MODULE_ORDER = [
   'src/classify.js',
   'src/build.js',
   'src/dom.js',
+  'src/store.js',
   'src/ask.js',
   'src/graph.js',
   'src/labels.js',
   'src/highlight.js',
   'src/logos.js',
   'src/ui.js',
+  'src/upload.js',
   'src/main.js'
 ];
 
@@ -65,9 +68,9 @@ function inlineLogos() {
   return out;
 }
 
-if (!existsSync(DATA)) {
-  console.error(`No ${DATA}. Run \`npm run data\` first.`);
-  process.exit(1);
+const hasData = existsSync(DATA);
+if (!hasData) {
+  console.log('No data — building an upload-only bundle. `npm run data` bakes a graph in.');
 }
 
 const BAD = [
@@ -121,9 +124,24 @@ const css = readFileSync('src/styles.css', 'utf8');
 const code = MODULE_ORDER.map(strip).join('\n');
 
 // Artifact deploys reject raw U+FFFD and are happier with escaped angle brackets.
-const data = readFileSync(DATA, 'utf8')
+const forJson = t => t
   .replace(/\uFFFD/g, '')
   .replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+
+const data = hasData ? forJson(readFileSync(DATA, 'utf8')) : null;
+// The rich classified people, so the bundled build can answer questions against
+// full headlines rather than the third of the evidence the tuples carry.
+const PEOPLE = DATA.replace(/[^/\\]+$/, 'people.json');
+const peopleJson = hasData && existsSync(PEOPLE)
+  ? forJson(JSON.stringify(leanPeople(JSON.parse(readFileSync(PEOPLE, 'utf8')))))
+  : null;
+
+// The demo CSV rides along, so a single file handed to someone can still show
+// them what it does without any other file beside it.
+const SAMPLE = 'sample/sample-connections.csv';
+const sampleScript = existsSync(SAMPLE)
+  ? `<script>window.__NC_SAMPLE=${JSON.stringify(readFileSync(SAMPLE, 'utf8')).replace(/</g, '\\u003c')};</` + `script>\n`
+  : '';
 
 const logos = inlineLogos();
 const logoScript = logos
@@ -143,7 +161,7 @@ ${css}
 ${body}
 
 <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js"></script>
-${logoScript}<script type="application/json" id="nc-data">${data}</script>
+${sampleScript}${logoScript}${data ? `<script type="application/json" id="nc-data">${data}</` + `script>\n` : ''}${peopleJson ? `<script type="application/json" id="nc-people">${peopleJson}</` + `script>\n` : ''}
 <script>
 (function () {
 "use strict";

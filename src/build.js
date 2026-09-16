@@ -214,3 +214,30 @@ export function peopleFromTuples(D) {
     degraded: true
   }));
 }
+
+/**
+ * The bundled single-file build already carries name, role, company, slug,
+ * seniority and domain inside D's tuples. The only things the rich view adds
+ * are the headline, the full list of matched domains, and the connection date —
+ * so ship those three and rebuild the rest, rather than serialising every
+ * person twice. On the real 10k set that is the difference between about
+ * 900 KB and 3.7 MB.
+ */
+export function leanPeople(people) {
+  return people.map(p => [p.headline || '', p.domains || [], p.connectedOn || 0]);
+}
+
+export function hydratePeople(D, lean) {
+  const base = peopleFromTuples(D);
+  return base.map((p, i) => {
+    const l = lean[i];
+    if (!l) return p;
+    return {
+      ...p,
+      headline: l[0] || '',
+      domains: l[1] || [],
+      connectedOn: l[2] || null,
+      degraded: false
+    };
+  });
+}
