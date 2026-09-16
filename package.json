@@ -14,6 +14,6 @@
     "vendor": "mkdir -p vendor && curl -sL https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js -o vendor/3d-force-graph.min.js",
     "logos": "node scripts/fetch-logos.mjs",
     "check": "for f in src/*.js scripts/*.mjs; do node --check \"$f\" || exit 1; done",
-    "test": "node --test \"test/*.test.mjs\""
+    "test": "node --test test/*.test.mjs"
   }
 }
