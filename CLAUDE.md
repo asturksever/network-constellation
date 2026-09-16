@@ -3,6 +3,11 @@
 A 3D force-directed view of a LinkedIn following, clustered by what people do.
 Static site, no framework, no bundler, no `node_modules`.
 
+**Starting a new iteration? Read [docs/next-iteration.md](docs/next-iteration.md)
+first.** It has the current state (pushed to a private GitHub repo, logos
+fetched, bundle stale), the one decision that is blocking the ask-your-graph UI
+with the payload sizes measured, and the ranked backlog behind it.
+
 ## Run it
 
 ```bash
