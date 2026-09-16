@@ -65,7 +65,25 @@ const boot = async () => {
 
   const { D, people } = found;
 
-  const world = createConstellation($('scene'), D, { rootLabel: 'You' });
+  // Two ways the scene can fail to exist at all: the graph library did not load
+  // (blocked CDN, offline), or the browser will not give us a WebGL context
+  // (old machine, GPU blocklist, hardware acceleration switched off). Both used
+  // to throw here and leave the page reading "Loading…" for ever.
+  // The WebGL failure surfaces as an async rejection deep inside three.js, so
+  // it has to be found before anything is constructed rather than caught after.
+  let world;
+  try {
+    if (typeof ForceGraph3D === 'undefined') {
+      throw new Error('The 3d-force-graph library did not load.');
+    }
+    if (!hasWebGL()) {
+      throw new Error('This browser could not open a WebGL context.');
+    }
+    world = createConstellation($('scene'), D, { rootLabel: 'You' });
+  } catch (err) {
+    fatal(err);
+    return;
+  }
   world.PALETTE = PALETTE;
 
   const marker = createHighlight($('labels'), world, D);
@@ -128,6 +146,47 @@ function wireDataControls(found, landing) {
     await forgetAll();
     location.reload();
   });
+}
+
+/** A throwaway context, purely to find out whether a real one is possible. */
+function hasWebGL() {
+  try {
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl2') || c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) return false;
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Nothing can be drawn. Say what happened and what to do about it, rather than
+ * leaving a dead page behind a status line that still says "Loading".
+ */
+function fatal(err) {
+  console.error(err);
+  const webgl = /webgl|context/i.test(String(err?.message));
+  const el = $('landing');
+  const inner = el?.querySelector('.landing-main');
+  if (inner) {
+    inner.innerHTML =
+      '<div class="landing-state bad">' +
+      '<span class="ls-mono">' +
+      (webgl
+        ? 'This browser could not open a 3D canvas.'
+        : 'The graph library could not be loaded.') +
+      '</span><span class="ls-note">' +
+      (webgl
+        ? 'Network Constellation needs WebGL. Try switching hardware acceleration on in your browser settings, or open it in a different browser.'
+        : 'It is fetched from a CDN, so an offline machine or a blocked domain will stop it. Check your connection and reload.') +
+      '</span></div>';
+  }
+  el?.classList.remove('gone');
+  document.body.classList.add('landing-up');
+  const status = $('status');
+  if (status) status.textContent = webgl ? 'No WebGL' : 'Library did not load';
 }
 
 /**
