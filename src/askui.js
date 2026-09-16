@@ -11,11 +11,14 @@
 //   uses. One camera, one marker, one status line.
 
 import { $, esc, fmt } from './dom.js';
-import { resolveQuery, runQuery, describe, buildIdf } from './ask.js';
+import { resolveQuery, runQuery, describe, buildIdf, mergeFilter } from './ask.js';
+import { understandQuestion } from './askllm.js';
 
 const LIMIT = 12;
 
 export function wireAsk({ world, D, people, ui }) {
+  // Set by main.js once the key panel exists; until then there is simply no key.
+  const api = {};
   const box = $('ask');
   const panel = $('answer');
   const queryEl = $('askQuery');
@@ -29,6 +32,10 @@ export function wireAsk({ world, D, people, ui }) {
 
   let results = [];
   let at = 0;
+  let employers = null;     // employer key -> { hqCity, orgType, ... }
+  let inFlight = null;      // AbortController for the question-understanding call
+
+  const setEmployers = m => { employers = m; };
 
   const nodeFor = p => world.nodes[world.PPL0 + p.i];
 
@@ -43,9 +50,39 @@ export function wireAsk({ world, D, people, ui }) {
     emptyEl.hidden = true;
   }
 
+  /**
+   * Runs immediately on the regex filter, then — only if a key is present —
+   * asks Claude to read the question again and re-runs with whatever it added.
+   * The first answer is never withheld waiting for the second.
+   */
   function run(question) {
-    const filter = resolveQuery(question);
-    const all = runQuery(filter, people, { idf, now: Date.now() });
+    const base = resolveQuery(question);
+    show(base, question);
+
+    if (!api.enrichment?.hasKey()) return;
+
+    inFlight?.abort();
+    inFlight = new AbortController();
+    const controller = inFlight;
+    panel.classList.add('thinking');
+
+    understandQuestion({ apiKey: api.enrichment.key, question, signal: controller.signal })
+      .then(u => {
+        if (controller.signal.aborted || box.dataset.ran !== question) return;
+        show(mergeFilter(base, u.ext), question, u.interpretation);
+      })
+      .catch(err => {
+        // The regex answer is already on screen, so this is a footnote, not a
+        // failure. Auth problems are worth surfacing; the rest are not.
+        if (err?.code === 'auth') ui.say(err.message);
+        console.warn('Question understanding unavailable:', err);
+      })
+      .finally(() => { if (!controller.signal.aborted) panel.classList.remove('thinking'); });
+  }
+
+  function show(filter, question, interpretation) {
+    const all = runQuery(filter, people, { idf, now: Date.now(), enrich: employers });
+    const excluded = all.excludedForLocation || 0;
 
     // A node the force simulation has not placed yet cannot be flown to.
     results = all.filter(p => nodeFor(p)?.x !== undefined);
@@ -53,7 +90,8 @@ export function wireAsk({ world, D, people, ui }) {
 
     panel.hidden = false;
     document.body.classList.add('answering');
-    queryEl.innerHTML = renderQuery(filter);
+    queryEl.innerHTML = renderQuery(filter, interpretation);
+    renderCaveat(filter, excluded);
     countEl.textContent = results.length
       ? `${fmt(results.length)} of ${fmt(people.length)}`
       : `0 of ${fmt(people.length)}`;
@@ -61,6 +99,7 @@ export function wireAsk({ world, D, people, ui }) {
     if (!results.length) {
       listEl.innerHTML = '';
       emptyEl.hidden = false;
+      at = 0;
       emptyEl.innerHTML = filter.subjects.length || filter.functions.length || filter.facets.length || filter.terms.length
         ? 'Nobody here matches that. The query above is what it actually ran — if it read the question wrongly, rephrase towards the words people put in their headlines.'
         : 'No usable signal in that question. Try naming a field, a job function or a distinctive word.';
@@ -73,9 +112,36 @@ export function wireAsk({ world, D, people, ui }) {
     land(0);
   }
 
-  function renderQuery(filter) {
-    const text = describe(filter);
-    return `<span class="aq-lab">Ran</span><span class="aq-text">${esc(text)}</span>`;
+  function renderQuery(filter, interpretation) {
+    const [line, added] = describe(filter).split('\n');
+    return `<span class="aq-lab">Ran</span><span class="aq-text">${esc(line)}</span>` +
+      (added ? `<span class="aq-added">${esc(added)}</span>` : '') +
+      (interpretation ? `<span class="aq-read">&ldquo;${esc(interpretation)}&rdquo;</span>` : '');
+  }
+
+  /**
+   * Location here is the EMPLOYER's headquarters, not where the person lives —
+   * a London engineer at a San Francisco company matches "based in SF". Saying
+   * so every time is the difference between a useful answer and a map made of
+   * guesses. The excluded count goes with it: a location filter drops everyone
+   * whose employer could not be placed, and hiding that would make a thin
+   * shortlist look like a complete one.
+   */
+  function renderCaveat(filter, excluded) {
+    const el = $('askCaveat');
+    if (!filter.location) { el.hidden = true; el.innerHTML = ''; return; }
+
+    if (filter.location.source === 'hint' && !employers?.size) {
+      el.hidden = false;
+      el.innerHTML = '<strong>Location was not applied.</strong> Your export has no ' +
+        'location in it. Add an API key under “Enrich with Claude” to look up where ' +
+        'employers are based.';
+      return;
+    }
+    el.hidden = false;
+    el.innerHTML = '<strong>Location is the employer’s headquarters</strong>, not where ' +
+      'the person lives.' +
+      (excluded ? ` ${fmt(excluded)} people were excluded because their employer could not be placed.` : '');
   }
 
   function render() {
@@ -155,5 +221,10 @@ export function wireAsk({ world, D, people, ui }) {
     $('askHint').textContent = 'Enter runs · headlines unavailable in this build';
   }
 
-  return { run, clear };
+  Object.assign(api, {
+    run, clear, setEmployers,
+    set enrichment(v) { api._enrich = v; },
+    get enrichment() { return api._enrich; }
+  });
+  return api;
 }

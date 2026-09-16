@@ -31,12 +31,16 @@ const MODULE_ORDER = [
   'src/dom.js',
   'src/store.js',
   'src/ask.js',
+  'src/llm.js',
+  'src/enrich.js',
+  'src/askllm.js',
   'src/graph.js',
   'src/labels.js',
   'src/highlight.js',
   'src/logos.js',
   'src/ui.js',
   'src/askui.js',
+  'src/enrichui.js',
   'src/upload.js',
   'src/main.js'
 ];

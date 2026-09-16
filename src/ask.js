@@ -35,6 +35,13 @@ export const FUNCTION_DOMAINS = new Set([
 ]);
 
 /** Cross-cutting job functions. Orthogonal to domain: a person has one domain, but "sales" cuts across all of them. */
+/** Every domain the taxonomy can emit. Claude may only pick from these. */
+export const DOMAIN_NAMES = [
+  ...DOMAINS.map(d => d[0]),
+  ...Object.keys(DOM_EXTRA),
+  ...DOM_TIER2.map(d => d[0])
+].filter((v, i, a) => a.indexOf(v) === i);
+
 export const FACETS = [
   ['sells or does BD',   /\b(sales|selling|sell|business development|\bbd\b|licens\w*|partnership|reseller|channel|commercial|revenue|account (exec|manager|director)|go[- ]to[- ]market|gtm)\b/i],
   ['builds',             /\b(engineer\w*|develop\w*|build\w*|coding|software|technical|architect)\b/i],
@@ -49,7 +56,9 @@ export const FACETS = [
 
 const STOP = new Set(('who do i know does anyone any my in at the a an of for on with to is are that which what where can could' +
   ' help me find looking look need want know knows working work works someone somebody people person contact contacts network' +
-  ' and or from get introduce introduction intro warm about please would should might there here best good top some').split(/\s+/));
+  ' and or from get introduce introduction intro warm about please would should might there here best good top some' +
+  // location cue words: they mark a place, they are not distinctive terms.
+  ' based located headquartered hq near around').split(/\s+/));
 
 /**
  * Questions use plurals where headlines use singulars ("founders" vs "Founder"),
@@ -103,7 +112,14 @@ export function resolveQuery(question) {
   // leftover words carry the specifics the taxonomy has no bucket for
   const terms = [...new Set(norm.split(' ').filter(w => w.length > 2 && !STOP.has(w)))];
 
-  return { question, domains, subjects, functions, facets, minRank, terms };
+  return {
+    question, domains, subjects, functions, facets, minRank, terms,
+    // Noticed without a key; the UI says location needs enrichment rather than
+    // pretending the constraint was applied.
+    location: locationHint(question),
+    orgTypes: [],
+    added: { domains: [], facets: [], terms: [] }
+  };
 }
 
 /** The query, in words. Shown to the user — this is the trust mechanism. */
@@ -113,8 +129,20 @@ export function describe(f) {
   if (f.functions.length) parts.push(`in ${f.functions.join(' or ')}`);
   if (f.facets.length) parts.push(f.facets.join(' or '));
   if (f.minRank != null) parts.push(`${SEN_ORDER[f.minRank]} or above`);
+  if (f.orgTypes?.length) parts.push(`employer is a ${f.orgTypes.join(' or ')}`);
+  if (f.location) {
+    const where = [...(f.location.cities || []), ...(f.location.countries || []), ...(f.location.regions || [])];
+    if (where.length) {
+      parts.push(`employer HQ in ${where.slice(0, 3).join(' or ')}` +
+        (f.location.source === 'llm' ? ' (via Claude)' : ''));
+    }
+  }
   if (f.terms.length) parts.push(`mentions ${f.terms.slice(0, 6).join(', ')}`);
-  return parts.length ? parts.join(' · ') : 'no usable signal in the question';
+  const line = parts.length ? parts.join(' · ') : 'no usable signal in the question';
+
+  const added = f.added || {};
+  const extra = [...(added.domains || []), ...(added.facets || []), ...(added.terms || [])];
+  return extra.length ? `${line}\nClaude added: ${extra.join(', ')}` : line;
 }
 
 const FACET_RE = Object.fromEntries(FACETS.map(([n, re]) => [n, re]));
@@ -148,7 +176,9 @@ export function buildIdf(people) {
 export function runQuery(filter, people, opts = {}) {
   const { subjects, functions, facets, minRank, terms } = filter;
   const idf = opts.idf || buildIdf(people);
+  const enrich = opts.enrich || null;
   const out = [];
+  let excluded = 0;
 
   for (const p of people) {
     const hay = `${p.role} ${p.company} ${p.headline}`;
@@ -164,9 +194,27 @@ export function runQuery(filter, people, opts = {}) {
       } else continue;
     }
 
-    // --- function: satisfied by the classified domain OR by a facet regex ---
+    // --- what kind of organisation ---
+    //
+    // Never a gate on its own: someone who writes "angel investor" and names no
+    // employer must still reach the answer. But it does satisfy the function
+    // gate below, because "Partner" at a firm Claude identified as a venture
+    // capital firm is exactly who the question is about, and their own headline
+    // will never contain the word "invest".
+    let orgMatch = false;
+    if (filter.orgTypes?.length && p.company && enrich) {
+      const e = enrich.get(normaliseCompany(p.company));
+      if (e && filter.orgTypes.includes(e.orgType)) {
+        orgMatch = true;
+        score += 3;
+        why.push('employer is a ' + e.orgType);
+      }
+    }
+
+    // --- function: satisfied by the classified domain, a facet regex, or the
+    //     employer being the kind of organisation asked for ---
     if (functions.length || facets.length) {
-      let ok = false;
+      let ok = orgMatch;
       for (const fd of functions) {
         if (p.domain === fd || p.domains?.includes(fd)) { score += 3; why.push(fd); ok = true; }
       }
@@ -174,6 +222,21 @@ export function runQuery(filter, people, opts = {}) {
         if (FACET_RE[f].test(hay)) { score += 3; why.push(f); ok = true; }
       }
       if (!ok) continue;
+    }
+
+    // --- where the employer is ---
+    //
+    // A hard gate, and a blunt one: no enrichment record means no match, so a
+    // location question silently drops everyone whose employer could not be
+    // placed. That is why the count of excluded people is reported rather than
+    // swallowed — a shortlist that quietly discards two thirds of a network
+    // while looking complete is worse than no shortlist.
+    if (filter.location && enrich) {
+      const e = p.company ? enrich.get(normaliseCompany(p.company)) : null;
+      const hit = e && matchesLocation(e, filter.location);
+      if (!hit) { excluded++; continue; }
+      score += 3;
+      why.push('employer HQ ' + (e.hqCity || e.hqCountry || e.region));
     }
 
     // --- rank ---
@@ -201,7 +264,94 @@ export function runQuery(filter, people, opts = {}) {
   }
 
   out.sort((a, b) => b.score - a.score);
+  // The count rides on the array rather than changing the return type, so every
+  // existing caller keeps working and the UI can still report what was dropped.
+  out.excludedForLocation = excluded;
   return out;
+}
+
+/* ---------- location and organisation type ---------- */
+/* Neither exists in a LinkedIn export. They come from the optional enrichment
+   pass, which asks Claude about employer names only. Everything below therefore
+   describes an EMPLOYER's headquarters, never where a person lives, and the UI
+   has to keep saying so. */
+
+/** Matches enrich.js's normKey; kept here so ask.js stays importable alone. */
+export const normaliseCompany = name =>
+  (name || '').toLowerCase().trim().replace(/\s+/g, ' ').replace(/[.,;:]+$/, '');
+
+const eq = (a, b) => Boolean(a) && Boolean(b) && a.toLowerCase() === b.toLowerCase();
+
+export function matchesLocation(e, loc) {
+  if (loc.cities?.length) {
+    if (loc.cities.some(c => eq(e.hqCity, c))) return true;
+    // A city named but not matched should not fall through to its country, or
+    // "in SF" quietly becomes "in the United States".
+    if (!loc.countries?.length && !loc.countryCodes?.length && !loc.regions?.length) return false;
+  }
+  if (loc.countryCodes?.length && loc.countryCodes.some(c => eq(e.hqCountryCode, c))) return true;
+  if (loc.countries?.length && loc.countries.some(c => eq(e.hqCountry, c))) return true;
+  if (loc.regions?.length && loc.regions.some(r => eq(e.region, r))) return true;
+  return false;
+}
+
+/**
+ * A question mentioning a place, without a key to resolve it properly. This
+ * only notices that a location was asked for; the UI turns that into "location
+ * needs enrichment" rather than pretending the constraint was applied.
+ */
+const LOCATION_CUE =
+  /\b(?:based|located|headquartered|hq|sitting|working)\s+(?:in|near|around|out of)\s+([\p{L}][\p{L}.'-]*(?:[ ][\p{L}][\p{L}.'-]*){0,2})/iu;
+
+export function locationHint(question) {
+  const m = question.match(LOCATION_CUE);
+  if (!m) return null;
+  const place = m[1].trim().replace(/[.,?!]+$/, '');
+  if (!place) return null;
+  return { cities: [place], countries: [], countryCodes: [], regions: [], source: 'hint' };
+}
+
+/**
+ * Fold what Claude read out of the question into the filter the regexes
+ * produced. Everything it adds is recorded separately so describe() can show
+ * which constraints came from where — the additions have to be as auditable as
+ * the rest, or the trust mechanism has a hole in it.
+ */
+export function mergeFilter(base, ext = {}) {
+  const known = new Set(DOMAIN_NAMES);
+  const facetNames = new Set(FACETS.map(f => f[0]));
+
+  const addedDomains = (ext.domains || []).filter(d => known.has(d) && !base.domains.includes(d));
+  const addedFacets = (ext.facets || []).filter(f => facetNames.has(f) && !base.facets.includes(f));
+  const addedTerms = (ext.synonyms || [])
+    .map(t => String(t).toLowerCase().trim())
+    .filter(t => t.length > 2 && !STOP.has(t) && !base.terms.includes(t));
+
+  const domains = [...base.domains, ...addedDomains];
+  const location = ext.location && (
+    ext.location.cities?.length || ext.location.countries?.length ||
+    ext.location.countryCodes?.length || ext.location.regions?.length
+  ) ? { ...ext.location, source: 'llm' } : base.location || null;
+
+  // Words swallowed by a place must not also be scored as free text, or the
+  // readout says "mentions san, francisco" about people in neither.
+  const placeWords = new Set(
+    [...(location?.cities || []), ...(location?.countries || []), ...(location?.regions || [])]
+      .flatMap(v => String(v).toLowerCase().split(/\s+/))
+  );
+  const terms = [...base.terms, ...addedTerms].filter(t => !placeWords.has(t));
+
+  return {
+    ...base,
+    domains,
+    subjects: domains.filter(d => !FUNCTION_DOMAINS.has(d)),
+    functions: domains.filter(d => FUNCTION_DOMAINS.has(d)),
+    facets: [...base.facets, ...addedFacets],
+    terms,
+    location,
+    orgTypes: ext.orgTypes || base.orgTypes || [],
+    added: { domains: addedDomains, facets: addedFacets, terms: addedTerms }
+  };
 }
 
 /** One call: question -> ranked shortlist + the query that produced it. */

@@ -77,6 +77,35 @@
     <span class="hint" id="askHint">Enter runs &middot; Enter again steps &middot; Esc clears</span>
   </div>
 
+  <div class="grp" id="enrichGrp">
+    <details id="enrichBox">
+      <summary>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9"/><path d="M17 12v4"/><path d="M20.5 12v3"/></svg>
+        <span>Enrich with Claude</span>
+        <span class="opt">optional</span>
+      </summary>
+      <div class="enrich-body">
+        <p class="ehelp">Your export has no location and no company type, so &ldquo;any VC in SF?&rdquo; can&rsquo;t be answered from it. Claude reads <strong>employer names only</strong> and returns headquarters and organisation type.</p>
+        <label class="elab" for="apiKey">Anthropic API key</label>
+        <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+        <label class="chk"><input type="checkbox" id="rememberKey"> Remember on this device</label>
+        <p class="ehelp small">Sent to Anthropic: employer names, and the text of your questions. Never people&rsquo;s names, emails or profile links. Use a key with a spend limit.</p>
+        <span class="lab">Scope</span>
+        <div class="seg" id="scopeSeg" role="group" aria-label="Enrichment scope">
+          <button type="button" data-scope="hubs" aria-pressed="true">Hubs</button>
+          <button type="button" data-scope="all" aria-pressed="false">All</button>
+        </div>
+        <div class="erow"><span id="scopeCount">—</span><span id="scopeCost">—</span></div>
+        <button type="button" class="primary" id="enrichRun">Enrich employers</button>
+        <div id="enrichProgress" hidden>
+          <div class="ebar"><span id="enrichBarFill"></span></div>
+          <div class="erow"><span id="enrichStat">—</span><button type="button" class="linky" id="enrichCancel">Cancel</button></div>
+        </div>
+        <p class="ehelp small" id="enrichKnown"></p>
+      </div>
+    </details>
+  </div>
+
   <div class="grp">
     <span class="lab">Who's in the scene</span>
     <div class="seg" id="densitySeg" role="group" aria-label="Density">
@@ -147,6 +176,7 @@
     <span id="askCount"></span>
   </div>
   <div id="askQuery"></div>
+  <p id="askCaveat" hidden></p>
   <p id="askEmpty" hidden></p>
   <div id="askList"></div>
   <div class="ans-foot">Click a result to fly there</div>
