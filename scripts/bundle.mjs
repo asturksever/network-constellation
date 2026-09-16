@@ -36,6 +36,7 @@ const MODULE_ORDER = [
   'src/highlight.js',
   'src/logos.js',
   'src/ui.js',
+  'src/askui.js',
   'src/upload.js',
   'src/main.js'
 ];

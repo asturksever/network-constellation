@@ -3,6 +3,7 @@ import { createLabels } from './labels.js';
 import { createHighlight } from './highlight.js';
 import { createLogos } from './logos.js';
 import { wireUI } from './ui.js';
+import { wireAsk } from './askui.js';
 import { createLanding } from './upload.js';
 import { peopleFromTuples, hydratePeople } from './build.js';
 import { loadGraph, forgetAll } from './store.js';
@@ -80,6 +81,8 @@ const boot = async () => {
     logoToggle.disabled = true;
     logoToggle.closest('.chk').title = 'No logos for these employers';
   }
+
+  wireAsk({ world, D, people, ui });
 
   wireDataControls(found, landing);
 

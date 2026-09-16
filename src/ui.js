@@ -84,7 +84,14 @@ export function wireUI(world, D, hit) {
   let matches = [];
   let at = 0;
 
-  function land(n) {
+  /**
+   * Fly to a person and lock the marker on them. The name search and the Ask
+   * panel both come through here — one camera path, one marker, one status
+   * line, so the two features can never drift apart.
+   */
+  function land(n, ctx) {
+    const index = ctx?.index ?? at;
+    const total = ctx?.total ?? matches.length;
     world.setHit(n);
     if (!world.isVisible(n)) {
       // the person is filtered out of the scene — put them back before flying
@@ -95,8 +102,8 @@ export function wireUI(world, D, hit) {
       world.swoopTo(n);
       hit.show(n);
     }
-    say(n.name + (matches.length > 1
-      ? `  ·  ${at + 1} of ${matches.length}, Enter for next`
+    say(n.name + (total > 1
+      ? `  ·  ${index + 1} of ${total}, Enter for next`
       : '  ·  found'));
   }
 
@@ -189,7 +196,7 @@ export function wireUI(world, D, hit) {
 
   addEventListener('resize', () => world.graph.width(innerWidth).height(innerHeight));
 
-  return { say };
+  return { say, land, clearHit };
 }
 
 function row(color, label, count, di) {

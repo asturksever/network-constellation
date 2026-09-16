@@ -72,6 +72,12 @@
   <p class="sub">Your LinkedIn connections, arranged by what people do. Drag to orbit, scroll to zoom, click a person to open their profile.</p>
 
   <div class="grp">
+    <span class="lab">Ask your network</span>
+    <input type="search" id="ask" placeholder="anyone in satellite imagery licensing?" aria-describedby="askHint" autocomplete="off">
+    <span class="hint" id="askHint">Enter runs &middot; Enter again steps &middot; Esc clears</span>
+  </div>
+
+  <div class="grp">
     <span class="lab">Who's in the scene</span>
     <div class="seg" id="densitySeg" role="group" aria-label="Density">
       <button data-d="all" aria-pressed="true">Everyone</button>
@@ -133,6 +139,17 @@
   <div class="stat"><span class="stat-k">Domains</span><span class="stat-v" id="nDom">—</span></div>
   <div class="stat"><span class="stat-k">Employers</span><span class="stat-v" id="nComp">—</span></div>
   <div class="stat"><span class="stat-k">Pulled</span><span class="stat-v" id="genDate">—</span></div>
+</div>
+
+<div class="panel" id="answer" hidden>
+  <div class="ans-head">
+    <span class="lab">Answer</span>
+    <span id="askCount"></span>
+  </div>
+  <div id="askQuery"></div>
+  <p id="askEmpty" hidden></p>
+  <div id="askList"></div>
+  <div class="ans-foot">Click a result to fly there</div>
 </div>
 
 <div id="tip"></div>

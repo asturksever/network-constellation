@@ -684,3 +684,120 @@ body.landing-up #meta,
 body.landing-up #tip,
 body.landing-up #status,
 body.landing-up #note { display: none; }
+
+/* ---------- the answer panel ---------- */
+/* Results live in their own column rather than inside #ctl. A matched headline
+   is the evidence behind a shortlist, and 284px cannot show one. */
+
+#answer {
+  top: 18px;
+  right: 18px;
+  width: 368px;
+  max-height: calc(100vh - 36px);
+  padding: 16px 17px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#answer[hidden] { display: none; }
+/* The answer takes the stats panel's slot while it is open. */
+body.answering #meta { display: none; }
+
+.ans-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.ans-head .lab { margin: 0; }
+#askCount {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+#askQuery {
+  background: rgba(8, 11, 14, 0.6);
+  border: 1px solid var(--hair-2);
+  border-left: 2px solid var(--hit-gold);
+  border-radius: 4px;
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.aq-lab {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.aq-text {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+#askEmpty { margin: 0; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+
+#askList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
+  margin-right: -4px;
+}
+#askList::-webkit-scrollbar { width: 5px; }
+#askList::-webkit-scrollbar-thumb { background: var(--hair); border-radius: 3px; }
+
+.ares {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 10px 11px;
+  border-radius: 5px;
+  border: 1px solid var(--hair-2);
+  background: transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ares:hover { border-color: var(--hair); background: rgba(24, 32, 39, 0.6); }
+.ares.on { border-color: rgba(255, 209, 102, 0.34); background: rgba(255, 209, 102, 0.07); }
+
+.ar-top { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; }
+.ar-name { font-weight: 600; font-size: 13px; color: var(--ink); }
+.ar-role { font-size: 11.5px; color: var(--muted); }
+.ar-co { font-size: 11.5px; color: var(--ink-2); }
+.ar-head { font-size: 11.5px; line-height: 1.45; color: var(--ink-2); }
+.ar-why { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px; }
+.why {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--hair);
+  border-radius: 3px;
+  padding: 2px 5px;
+}
+
+.ans-foot {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 9px;
+  border-top: 1px solid var(--hair-2);
+}
+
+@media (max-width: 900px) {
+  #answer { display: none; }
+}
+
+/* The edges caveat sits where the answer panel lands, and while you are reading
+   a shortlist the shortlist is the thing that matters. */
+body.answering #note { display: none; }
