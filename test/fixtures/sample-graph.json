@@ -1,0 +1,2421 @@
+{
+  "generatedAt": "2026-01-01",
+  "total": 250,
+  "namedCompany": 239,
+  "sen": [
+    "Founder & C-suite",
+    "VP, Head & Director",
+    "Manager & Lead",
+    "Senior IC",
+    "Individual contributor",
+    "Student & Early career",
+    "Unstated"
+  ],
+  "senCounts": [
+    2,
+    39,
+    49,
+    41,
+    87,
+    9,
+    23
+  ],
+  "doms": [
+    "Insurance, Risk & Finance",
+    "Other",
+    "Operations & Manufacturing",
+    "Earth Observation & RS",
+    "GIS & Spatial Analysis",
+    "Sales, BD & Marketing",
+    "Urban Planning & Mobility",
+    "Climate & Environment",
+    "Government & Public Sector",
+    "Software & Cloud",
+    "Surveying, Drone & LiDAR",
+    "General management",
+    "Data Engineering & Analytics",
+    "Health & Life Sciences",
+    "Real Estate & Construction",
+    "Consulting & Prof. Services",
+    "Recruitment & HR",
+    "AI & Machine Learning",
+    "Product & Program",
+    "Mapping & Navigation",
+    "AV, Automotive & Fleet",
+    "Engineering (other)",
+    "Design, Media & Content",
+    "Defence, Security & OSINT"
+  ],
+  "domCounts": [
+    29,
+    28,
+    18,
+    17,
+    16,
+    14,
+    14,
+    13,
+    12,
+    11,
+    11,
+    9,
+    7,
+    6,
+    6,
+    6,
+    6,
+    5,
+    5,
+    4,
+    4,
+    4,
+    4,
+    1
+  ],
+  "domTiers": [
+    1,
+    3,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    2,
+    1,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    1
+  ],
+  "comps": [
+    "Quayside Software",
+    "Ironmill Manufacturing",
+    "Meridian Fund",
+    "Sable Defence",
+    "Riverbank Institute",
+    "Silverpine Bank",
+    "Northgate University",
+    "Foxglove Retail",
+    "Stellar Freight",
+    "Atlas Reinsurance",
+    "Harbour Line Ventures",
+    "Kestrel Robotics",
+    "Fjordline Energy",
+    "Redgrave Talent",
+    "Ministry of Transport",
+    "Beacon Property",
+    "Delta Survey",
+    "Havenbrook Consulting",
+    "Civic Lab",
+    "Marchwood Health",
+    "Terralume",
+    "City of Ashford",
+    "Northwind Rail",
+    "Orchard Studio",
+    "SkyfieldSat",
+    "Cartogram Works",
+    "Lantern Analytics",
+    "Aurora Climate",
+    "Bosphorus Planning",
+    "Blue Mesa Water",
+    "Vantara Imaging",
+    "Groundtruth Labs"
+  ],
+  "compCounts": [
+    21,
+    13,
+    11,
+    11,
+    10,
+    10,
+    10,
+    9,
+    9,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    7,
+    7,
+    7,
+    7,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    5,
+    5,
+    4,
+    3,
+    2,
+    2,
+    2
+  ],
+  "people": [
+    [
+      "Pavel Mendes",
+      "Staff Software Engineer",
+      0,
+      9,
+      3,
+      "pavel-mendes-100",
+      ""
+    ],
+    [
+      "Clara Diallo",
+      "Business Development Manager",
+      7,
+      5,
+      2,
+      "clara-diallo-101",
+      ""
+    ],
+    [
+      "Sam Castellanos",
+      "Catastrophe Risk Analyst",
+      9,
+      0,
+      4,
+      "sam-castellanos-102",
+      ""
+    ],
+    [
+      "Joachim Lindholm",
+      "Operations Director",
+      1,
+      2,
+      1,
+      "joachim-lindholm-103",
+      ""
+    ],
+    [
+      "Greta Yilmaz",
+      "Business Development Manager",
+      7,
+      5,
+      2,
+      "greta-yilmaz-104",
+      ""
+    ],
+    [
+      "Imani Demir",
+      "Senior Urban Planner",
+      28,
+      6,
+      3,
+      "imani-demir-105",
+      ""
+    ],
+    [
+      "Yusuf Castellanos",
+      "Process Engineer",
+      1,
+      2,
+      4,
+      "yusuf-castellanos-106",
+      ""
+    ],
+    [
+      "Yusuf Ferreira",
+      "Investment Associate",
+      10,
+      0,
+      4,
+      "yusuf-ferreira-107",
+      ""
+    ],
+    [
+      "Sam Ellison",
+      "Business Development Manager",
+      7,
+      5,
+      2,
+      "sam-ellison-108",
+      ""
+    ],
+    [
+      "Imani Rossi",
+      "Cartographer",
+      25,
+      19,
+      4,
+      "imani-rossi-109",
+      ""
+    ],
+    [
+      "Freya Sandoval",
+      "Building Surveyor",
+      15,
+      10,
+      4,
+      "freya-sandoval-110",
+      ""
+    ],
+    [
+      "Zainab Bergstrom",
+      "Perception Lead",
+      11,
+      1,
+      2,
+      "zainab-bergstrom-111",
+      ""
+    ],
+    [
+      "Nina Kowalski",
+      "Head of Underwriting",
+      9,
+      0,
+      1,
+      "nina-kowalski-112",
+      ""
+    ],
+    [
+      "Lukas Achebe",
+      "Clinical Data Manager",
+      19,
+      13,
+      2,
+      "lukas-achebe-113",
+      ""
+    ],
+    [
+      "Sofia Nandakumar",
+      "Drone Survey Lead",
+      16,
+      10,
+      2,
+      "sofia-nandakumar-114",
+      ""
+    ],
+    [
+      "Rafael Lindgren",
+      "Perception Lead",
+      11,
+      1,
+      2,
+      "rafael-lindgren-115",
+      ""
+    ],
+    [
+      "Sam Aziz",
+      "Research Software Engineer",
+      4,
+      9,
+      4,
+      "sam-aziz-116",
+      ""
+    ],
+    [
+      "Zainab Duarte",
+      "Head of Sales",
+      7,
+      5,
+      1,
+      "zainab-duarte-117",
+      ""
+    ],
+    [
+      "Joachim Takahashi",
+      "Cloud Architect",
+      0,
+      14,
+      3,
+      "joachim-takahashi-118",
+      ""
+    ],
+    [
+      "Imani Ngata",
+      "Operations Director",
+      1,
+      2,
+      1,
+      "imani-ngata-119",
+      ""
+    ],
+    [
+      "Anika Correia",
+      "Management Consultant",
+      17,
+      15,
+      3,
+      "anika-correia-120",
+      ""
+    ],
+    [
+      "Tobias Correia",
+      "GIS Manager",
+      12,
+      4,
+      2,
+      "tobias-correia-121",
+      ""
+    ],
+    [
+      "Mei Novotny",
+      "Financial Controller",
+      5,
+      0,
+      6,
+      "mei-novotny-122",
+      ""
+    ],
+    [
+      "Lukas Okafor",
+      "Senior Consultant, Geospatial",
+      17,
+      4,
+      3,
+      "lukas-okafor-123",
+      ""
+    ],
+    [
+      "Nina Lindqvist",
+      "Development Director",
+      15,
+      11,
+      1,
+      "nina-lindqvist-124",
+      ""
+    ],
+    [
+      "Britta Santoro",
+      "PhD Candidate, Remote Sensing",
+      6,
+      3,
+      5,
+      "britta-santoro-125",
+      ""
+    ],
+    [
+      "Yusuf Sorensen",
+      "Catastrophe Risk Analyst",
+      9,
+      0,
+      4,
+      "yusuf-sorensen-126",
+      ""
+    ],
+    [
+      "Ines Lindgren",
+      "Investment Associate",
+      10,
+      0,
+      4,
+      "ines-lindgren-127",
+      ""
+    ],
+    [
+      "Peter Rao",
+      "Photogrammetry Engineer",
+      20,
+      10,
+      4,
+      "peter-rao-128",
+      ""
+    ],
+    [
+      "Pavel Ferreira",
+      "Transport Planner",
+      18,
+      6,
+      4,
+      "pavel-ferreira-129",
+      ""
+    ],
+    [
+      "Sam Varga",
+      "GIS Manager",
+      12,
+      4,
+      2,
+      "sam-varga-130",
+      ""
+    ],
+    [
+      "Arjun Keita",
+      "Autonomous Vehicle Engineer",
+      8,
+      20,
+      4,
+      "arjun-keita-131",
+      ""
+    ],
+    [
+      "Saoirse Novotny",
+      "Professor of Geography",
+      6,
+      4,
+      3,
+      "saoirse-novotny-132",
+      ""
+    ],
+    [
+      "Saoirse Sorensen",
+      "Development Director",
+      15,
+      11,
+      1,
+      "saoirse-sorensen-133",
+      ""
+    ],
+    [
+      "Greta Duarte",
+      "Renewables Project Manager",
+      12,
+      7,
+      2,
+      "greta-duarte-134",
+      ""
+    ],
+    [
+      "Sam Reinhart",
+      "Machine Learning Engineer",
+      11,
+      17,
+      4,
+      "sam-reinhart-135",
+      ""
+    ],
+    [
+      "Pavel Novotny",
+      "Technical Recruiter",
+      13,
+      16,
+      6,
+      "pavel-novotny-136",
+      ""
+    ],
+    [
+      "Ines Keita",
+      "Professor of Geography",
+      6,
+      4,
+      3,
+      "ines-keita-137",
+      ""
+    ],
+    [
+      "Greta Marchetti",
+      "Autonomous Vehicle Engineer",
+      8,
+      20,
+      4,
+      "greta-marchetti-138",
+      ""
+    ],
+    [
+      "Leila Haddad",
+      "Urban Data Scientist",
+      18,
+      17,
+      4,
+      "leila-haddad-139",
+      ""
+    ],
+    [
+      "Omar Santoro",
+      "Hydrologist",
+      29,
+      1,
+      6,
+      "omar-santoro-140",
+      ""
+    ],
+    [
+      "Amara Farouk",
+      "Epidemiologist",
+      19,
+      13,
+      6,
+      "amara-farouk-141",
+      ""
+    ],
+    [
+      "Leila Ferreira",
+      "Renewables Project Manager",
+      12,
+      7,
+      2,
+      "leila-ferreira-142",
+      ""
+    ],
+    [
+      "Greta Santoro",
+      "Senior Consultant, Geospatial",
+      17,
+      4,
+      3,
+      "greta-santoro-143",
+      ""
+    ],
+    [
+      "Sofia Novotny",
+      "Planning Officer",
+      21,
+      8,
+      4,
+      "sofia-novotny-144",
+      ""
+    ],
+    [
+      "Amara Lindqvist",
+      "Staff Software Engineer",
+      0,
+      9,
+      3,
+      "amara-lindqvist-145",
+      ""
+    ],
+    [
+      "Tobias Novotny",
+      "Autonomous Vehicle Engineer",
+      8,
+      20,
+      4,
+      "tobias-novotny-146",
+      ""
+    ],
+    [
+      "Omar Takahashi",
+      "Transport Planner",
+      18,
+      6,
+      4,
+      "omar-takahashi-147",
+      ""
+    ],
+    [
+      "Dmitri Olsen",
+      "Engineering Manager",
+      0,
+      21,
+      2,
+      "dmitri-olsen-148",
+      ""
+    ],
+    [
+      "Marcus Haugen",
+      "Machine Learning Engineer",
+      11,
+      17,
+      4,
+      "marcus-haugen-149",
+      ""
+    ],
+    [
+      "Freya Vranken",
+      "Venture Capital Analyst",
+      2,
+      0,
+      4,
+      "freya-vranken-150",
+      ""
+    ],
+    [
+      "Idris Santoro",
+      "Process Engineer",
+      1,
+      2,
+      4,
+      "idris-santoro-151",
+      ""
+    ],
+    [
+      "Ines Vos",
+      "Transport Planner",
+      18,
+      6,
+      4,
+      "ines-vos-152",
+      ""
+    ],
+    [
+      "Idris Nwosu",
+      "Fleet Operations Manager",
+      8,
+      2,
+      2,
+      "idris-nwosu-153",
+      ""
+    ],
+    [
+      "Oskar Lindholm",
+      "Operations Director",
+      1,
+      2,
+      1,
+      "oskar-lindholm-154",
+      ""
+    ],
+    [
+      "Clara Abadi",
+      "Technical Recruiter",
+      13,
+      16,
+      6,
+      "clara-abadi-155",
+      ""
+    ],
+    [
+      "Britta Rossi",
+      "Venture Capital Analyst",
+      2,
+      0,
+      4,
+      "britta-rossi-156",
+      ""
+    ],
+    [
+      "Leila Nandakumar",
+      "Operations Director",
+      1,
+      2,
+      1,
+      "leila-nandakumar-157",
+      ""
+    ],
+    [
+      "Rosa Rossi",
+      "Partnerships Lead",
+      20,
+      5,
+      2,
+      "rosa-rossi-158",
+      ""
+    ],
+    [
+      "Aisha Ellison",
+      "Drone Survey Lead",
+      16,
+      10,
+      2,
+      "aisha-ellison-159",
+      ""
+    ],
+    [
+      "Nina Novak",
+      "OSINT Analyst",
+      3,
+      23,
+      4,
+      "nina-novak-160",
+      ""
+    ],
+    [
+      "Anika Santoro",
+      "Signalling Engineer",
+      22,
+      6,
+      4,
+      "anika-santoro-161",
+      ""
+    ],
+    [
+      "Mateo Halvorsen",
+      "Policy Adviser",
+      14,
+      8,
+      3,
+      "mateo-halvorsen-162",
+      ""
+    ],
+    [
+      "Astrid Reinhart",
+      "Geospatial Intelligence Officer",
+      3,
+      3,
+      4,
+      "astrid-reinhart-163",
+      ""
+    ],
+    [
+      "Diego Novotny",
+      "Catastrophe Risk Analyst",
+      9,
+      0,
+      4,
+      "diego-novotny-164",
+      ""
+    ],
+    [
+      "Saoirse Haddad",
+      "Professor of Geography",
+      6,
+      4,
+      3,
+      "saoirse-haddad-165",
+      ""
+    ],
+    [
+      "Kenji Castellanos",
+      "Quantitative Analyst",
+      5,
+      1,
+      4,
+      "kenji-castellanos-166",
+      ""
+    ],
+    [
+      "Yusuf Sandoval",
+      "Research Software Engineer",
+      4,
+      9,
+      4,
+      "yusuf-sandoval-167",
+      ""
+    ],
+    [
+      "Mateo Castellanos",
+      "Engineering Manager",
+      0,
+      21,
+      2,
+      "mateo-castellanos-168",
+      ""
+    ],
+    [
+      "Amara Diallo",
+      "Geospatial Intelligence Officer",
+      3,
+      3,
+      4,
+      "amara-diallo-169",
+      ""
+    ],
+    [
+      "Britta Rao",
+      "Epidemiologist",
+      19,
+      13,
+      6,
+      "britta-rao-170",
+      ""
+    ],
+    [
+      "Arjun Marchetti",
+      "Geospatial Intelligence Officer",
+      3,
+      3,
+      4,
+      "arjun-marchetti-171",
+      ""
+    ],
+    [
+      "Kenji Correia",
+      "Transport Planner",
+      18,
+      6,
+      4,
+      "kenji-correia-172",
+      ""
+    ],
+    [
+      "Lena Lindgren",
+      "Cartographer",
+      25,
+      19,
+      4,
+      "lena-lindgren-173",
+      ""
+    ],
+    [
+      "Kenji Ngata",
+      "Business Development Manager",
+      7,
+      5,
+      2,
+      "kenji-ngata-174",
+      ""
+    ],
+    [
+      "Mei Mbeki",
+      "Director, Data Licensing",
+      30,
+      11,
+      1,
+      "mei-mbeki-175",
+      ""
+    ],
+    [
+      "Camila Farouk",
+      "Research Fellow, Climate Science",
+      4,
+      7,
+      3,
+      "camila-farouk-176",
+      ""
+    ],
+    [
+      "Omar Rossi",
+      "Independent consultant",
+      -1,
+      15,
+      3,
+      "omar-rossi-177",
+      ""
+    ],
+    [
+      "Amara Marchetti",
+      "Product Manager",
+      0,
+      18,
+      2,
+      "amara-marchetti-178",
+      ""
+    ],
+    [
+      "Stefan Haugen",
+      "Venture Capital Analyst",
+      2,
+      0,
+      4,
+      "stefan-haugen-179",
+      ""
+    ],
+    [
+      "Leila Keita",
+      "Head of Sales",
+      7,
+      5,
+      1,
+      "leila-keita-180",
+      ""
+    ],
+    [
+      "Lukas Duarte",
+      "Partnerships Lead",
+      20,
+      5,
+      2,
+      "lukas-duarte-181",
+      ""
+    ],
+    [
+      "Lena Haddad",
+      "Research Fellow, Climate Science",
+      4,
+      7,
+      3,
+      "lena-haddad-182",
+      ""
+    ],
+    [
+      "Devon Ngata",
+      "Head of Network Planning",
+      22,
+      6,
+      1,
+      "devon-ngata-183",
+      ""
+    ],
+    [
+      "Oskar Santoro",
+      "Analytics Engineer",
+      26,
+      12,
+      4,
+      "oskar-santoro-184",
+      ""
+    ],
+    [
+      "Aisha Haddad",
+      "Technical Recruiter",
+      13,
+      16,
+      6,
+      "aisha-haddad-185",
+      ""
+    ],
+    [
+      "Helena Mbeki",
+      "Brand Designer",
+      23,
+      5,
+      4,
+      "helena-mbeki-186",
+      ""
+    ],
+    [
+      "Tomas Oyelaran",
+      "Operations Director",
+      1,
+      2,
+      1,
+      "tomas-oyelaran-187",
+      ""
+    ],
+    [
+      "Freya Brecht",
+      "Perception Lead",
+      11,
+      1,
+      2,
+      "freya-brecht-188",
+      ""
+    ],
+    [
+      "Saoirse Vos",
+      "Policy Adviser",
+      14,
+      8,
+      3,
+      "saoirse-vos-189",
+      ""
+    ],
+    [
+      "Camila Nandakumar",
+      "Head of Network Planning",
+      22,
+      6,
+      1,
+      "camila-nandakumar-190",
+      ""
+    ],
+    [
+      "Greta Novak",
+      "Independent consultant",
+      -1,
+      15,
+      3,
+      "greta-novak-191",
+      ""
+    ],
+    [
+      "Zainab Diallo",
+      "Operations Director",
+      1,
+      2,
+      1,
+      "zainab-diallo-192",
+      ""
+    ],
+    [
+      "Amara Vranken",
+      "Senior Consultant, Geospatial",
+      17,
+      4,
+      3,
+      "amara-vranken-193",
+      ""
+    ],
+    [
+      "Leila Ngata",
+      "Product Manager",
+      0,
+      18,
+      2,
+      "leila-ngata-194",
+      ""
+    ],
+    [
+      "Anika Nwosu",
+      "Machine Learning Engineer",
+      11,
+      17,
+      4,
+      "anika-nwosu-195",
+      ""
+    ],
+    [
+      "Noor Novak",
+      "Content Lead",
+      23,
+      22,
+      2,
+      "noor-novak-196",
+      ""
+    ],
+    [
+      "Peter Ellison",
+      "Investment Associate",
+      10,
+      0,
+      4,
+      "peter-ellison-197",
+      ""
+    ],
+    [
+      "Anika Castellanos",
+      "Research Fellow, Climate Science",
+      4,
+      7,
+      3,
+      "anika-castellanos-198",
+      ""
+    ],
+    [
+      "Peter Lindholm",
+      "Investment Associate",
+      10,
+      0,
+      4,
+      "peter-lindholm-199",
+      ""
+    ],
+    [
+      "Idris Fischer",
+      "Photogrammetry Engineer",
+      20,
+      10,
+      4,
+      "idris-fischer-200",
+      ""
+    ],
+    [
+      "Oskar Fischer",
+      "Drone Survey Lead",
+      16,
+      10,
+      2,
+      "oskar-fischer-201",
+      ""
+    ],
+    [
+      "Marta Nandakumar",
+      "Development Director",
+      15,
+      11,
+      1,
+      "marta-nandakumar-202",
+      ""
+    ],
+    [
+      "Hannah Duarte",
+      "Research Software Engineer",
+      4,
+      9,
+      4,
+      "hannah-duarte-203",
+      ""
+    ],
+    [
+      "Mei Ellison",
+      "Head of Digital",
+      21,
+      8,
+      1,
+      "mei-ellison-204",
+      ""
+    ],
+    [
+      "Kwame Nandakumar",
+      "Carbon Accounting Lead",
+      27,
+      7,
+      2,
+      "kwame-nandakumar-205",
+      ""
+    ],
+    [
+      "Mateo Olsen",
+      "Looking for a new role in data",
+      -1,
+      1,
+      5,
+      "mateo-olsen-206",
+      ""
+    ],
+    [
+      "Imani Molnar",
+      "Principal",
+      2,
+      1,
+      2,
+      "imani-molnar-207",
+      ""
+    ],
+    [
+      "Rosa Lindgren",
+      "Angel investor",
+      -1,
+      1,
+      6,
+      "rosa-lindgren-208",
+      ""
+    ],
+    [
+      "Idris Novak",
+      "Technical Recruiter",
+      13,
+      16,
+      6,
+      "idris-novak-209",
+      ""
+    ],
+    [
+      "Yusuf Kowalski",
+      "Geodetic Surveyor",
+      16,
+      10,
+      4,
+      "yusuf-kowalski-210",
+      ""
+    ],
+    [
+      "Noor Oyelaran",
+      "Content Lead",
+      23,
+      22,
+      2,
+      "noor-oyelaran-211",
+      ""
+    ],
+    [
+      "Arjun Vranken",
+      "Process Engineer",
+      1,
+      2,
+      4,
+      "arjun-vranken-212",
+      ""
+    ],
+    [
+      "Idris Aziz",
+      "Engineering Manager",
+      0,
+      21,
+      2,
+      "idris-aziz-213",
+      ""
+    ],
+    [
+      "Britta Oyelaran",
+      "Head of Commercial",
+      24,
+      1,
+      1,
+      "britta-oyelaran-214",
+      ""
+    ],
+    [
+      "Marcus Diallo",
+      "Data Analyst",
+      14,
+      12,
+      4,
+      "marcus-diallo-215",
+      ""
+    ],
+    [
+      "Leila Sorensen",
+      "Head of Network Planning",
+      22,
+      6,
+      1,
+      "leila-sorensen-216",
+      ""
+    ],
+    [
+      "Oskar Rao",
+      "Investment Associate",
+      10,
+      0,
+      4,
+      "oskar-rao-217",
+      ""
+    ],
+    [
+      "Leila Sandoval",
+      "Quantitative Analyst",
+      5,
+      1,
+      4,
+      "leila-sandoval-218",
+      ""
+    ],
+    [
+      "Mei Oduya",
+      "Epidemiologist",
+      19,
+      13,
+      6,
+      "mei-oduya-219",
+      ""
+    ],
+    [
+      "Tobias Demir",
+      "Cloud Architect",
+      0,
+      14,
+      3,
+      "tobias-demir-220",
+      ""
+    ],
+    [
+      "Nina Takahashi",
+      "Student, MSc Geographic Information Science",
+      -1,
+      4,
+      5,
+      "nina-takahashi-221",
+      ""
+    ],
+    [
+      "Diego Fischer",
+      "Renewables Project Manager",
+      12,
+      7,
+      2,
+      "diego-fischer-222",
+      ""
+    ],
+    [
+      "Kenji Santoro",
+      "Catastrophe Risk Analyst",
+      9,
+      0,
+      4,
+      "kenji-santoro-223",
+      ""
+    ],
+    [
+      "Saoirse Novak",
+      "Hydrologist",
+      29,
+      1,
+      6,
+      "saoirse-novak-224",
+      ""
+    ],
+    [
+      "Peter Haddad",
+      "Professor of Geography",
+      6,
+      4,
+      3,
+      "peter-haddad-225",
+      ""
+    ],
+    [
+      "Diego Bakker",
+      "Financial Controller",
+      5,
+      0,
+      6,
+      "diego-bakker-226",
+      ""
+    ],
+    [
+      "Amara Novak",
+      "Development Director",
+      15,
+      11,
+      1,
+      "amara-novak-227",
+      ""
+    ],
+    [
+      "Devon Novak",
+      "Renewables Project Manager",
+      12,
+      7,
+      2,
+      "devon-novak-228",
+      ""
+    ],
+    [
+      "Ines Mendes",
+      "Financial Controller",
+      5,
+      0,
+      6,
+      "ines-mendes-229",
+      ""
+    ],
+    [
+      "Lena Ngata",
+      "SAR Processing Engineer",
+      24,
+      3,
+      4,
+      "lena-ngata-230",
+      ""
+    ],
+    [
+      "Nina Demir",
+      "Policy Adviser",
+      14,
+      8,
+      3,
+      "nina-demir-231",
+      ""
+    ],
+    [
+      "Hassan Reinhart",
+      "Photogrammetry Engineer",
+      20,
+      10,
+      4,
+      "hassan-reinhart-232",
+      ""
+    ],
+    [
+      "Diego Mendes",
+      "Cloud Architect",
+      0,
+      14,
+      3,
+      "diego-mendes-233",
+      ""
+    ],
+    [
+      "Devon Ellison",
+      "Technical Recruiter",
+      13,
+      16,
+      6,
+      "devon-ellison-234",
+      ""
+    ],
+    [
+      "Nina Achebe",
+      "Research Fellow, Climate Science",
+      4,
+      7,
+      3,
+      "nina-achebe-235",
+      ""
+    ],
+    [
+      "Britta Olsen",
+      "Engineering Manager",
+      0,
+      21,
+      2,
+      "britta-olsen-236",
+      ""
+    ],
+    [
+      "Greta Achebe",
+      "Independent consultant",
+      -1,
+      15,
+      3,
+      "greta-achebe-237",
+      ""
+    ],
+    [
+      "Marta Restrepo",
+      "PhD Candidate, Remote Sensing",
+      6,
+      3,
+      5,
+      "marta-restrepo-238",
+      ""
+    ],
+    [
+      "Sam Mbeki",
+      "Fleet Operations Manager",
+      8,
+      2,
+      2,
+      "sam-mbeki-239",
+      ""
+    ],
+    [
+      "Anika Restrepo",
+      "Head of Network Planning",
+      22,
+      6,
+      1,
+      "anika-restrepo-240",
+      ""
+    ],
+    [
+      "Arjun Mendes",
+      "Geospatial Intelligence Officer",
+      3,
+      3,
+      4,
+      "arjun-mendes-241",
+      ""
+    ],
+    [
+      "Stefan Lindgren",
+      "Content Lead",
+      23,
+      22,
+      2,
+      "stefan-lindgren-242",
+      ""
+    ],
+    [
+      "Rafael Reinhart",
+      "Staff Software Engineer",
+      0,
+      9,
+      3,
+      "rafael-reinhart-243",
+      ""
+    ],
+    [
+      "Devon Correia",
+      "Senior Consultant, Geospatial",
+      17,
+      4,
+      3,
+      "devon-correia-244",
+      ""
+    ],
+    [
+      "Clara Bergstrom",
+      "Planning Officer",
+      21,
+      8,
+      4,
+      "clara-bergstrom-245",
+      ""
+    ],
+    [
+      "Kenji Molnar",
+      "Policy Adviser",
+      14,
+      8,
+      3,
+      "kenji-molnar-246",
+      ""
+    ],
+    [
+      "Astrid Diallo",
+      "Epidemiologist",
+      19,
+      13,
+      6,
+      "astrid-diallo-247",
+      ""
+    ],
+    [
+      "Noor Yilmaz",
+      "Drone Survey Lead",
+      16,
+      10,
+      2,
+      "noor-yilmaz-248",
+      ""
+    ],
+    [
+      "Yara Rao",
+      "Angel investor",
+      -1,
+      1,
+      6,
+      "yara-rao-249",
+      ""
+    ],
+    [
+      "Bjorn Achebe",
+      "Head of Talent",
+      13,
+      1,
+      1,
+      "bjorn-achebe-250",
+      ""
+    ],
+    [
+      "Lena Abadi",
+      "Head of Sustainability",
+      27,
+      7,
+      1,
+      "lena-abadi-251",
+      ""
+    ],
+    [
+      "Devon Bakker",
+      "Transport Planner",
+      18,
+      6,
+      4,
+      "devon-bakker-252",
+      ""
+    ],
+    [
+      "Mateo Demir",
+      "Brand Designer",
+      23,
+      5,
+      4,
+      "mateo-demir-253",
+      ""
+    ],
+    [
+      "Helena Kowalski",
+      "Fleet Operations Manager",
+      8,
+      2,
+      2,
+      "helena-kowalski-254",
+      ""
+    ],
+    [
+      "Leila Lindqvist",
+      "Venture Capital Analyst",
+      2,
+      0,
+      4,
+      "leila-lindqvist-255",
+      ""
+    ],
+    [
+      "Idris Bakker",
+      "Business Development Manager",
+      7,
+      5,
+      2,
+      "idris-bakker-256",
+      ""
+    ],
+    [
+      "Amara Vos",
+      "Head of Commercial",
+      24,
+      1,
+      1,
+      "amara-vos-257",
+      ""
+    ],
+    [
+      "Ines Petrov",
+      "Head of Digital",
+      21,
+      8,
+      1,
+      "ines-petrov-258",
+      ""
+    ],
+    [
+      "Yusuf Reinhart",
+      "PhD Candidate, Remote Sensing",
+      6,
+      3,
+      5,
+      "yusuf-reinhart-259",
+      ""
+    ],
+    [
+      "Rafael Bakker",
+      "Investment Associate",
+      10,
+      0,
+      4,
+      "rafael-bakker-260",
+      ""
+    ],
+    [
+      "Stefan Novotny",
+      "Policy Adviser",
+      14,
+      8,
+      3,
+      "stefan-novotny-261",
+      ""
+    ],
+    [
+      "Ines Demir",
+      "Angel investor",
+      -1,
+      1,
+      6,
+      "ines-demir-262",
+      ""
+    ],
+    [
+      "Idris Varga",
+      "Financial Controller",
+      5,
+      0,
+      6,
+      "idris-varga-263",
+      ""
+    ],
+    [
+      "Tomas Varga",
+      "Geospatial Intelligence Officer",
+      3,
+      3,
+      4,
+      "tomas-varga-264",
+      ""
+    ],
+    [
+      "Nina Vranken",
+      "Senior Urban Planner",
+      28,
+      6,
+      3,
+      "nina-vranken-265",
+      ""
+    ],
+    [
+      "Clara Vranken",
+      "Student, MSc Geographic Information Science",
+      -1,
+      4,
+      5,
+      "clara-vranken-266",
+      ""
+    ],
+    [
+      "Freya Ngata",
+      "Process Engineer",
+      1,
+      2,
+      4,
+      "freya-ngata-267",
+      ""
+    ],
+    [
+      "Zainab Haugen",
+      "Geodetic Surveyor",
+      16,
+      10,
+      4,
+      "zainab-haugen-268",
+      ""
+    ],
+    [
+      "Imani Olsen",
+      "Head of Sustainability",
+      27,
+      7,
+      1,
+      "imani-olsen-269",
+      ""
+    ],
+    [
+      "Bjorn Brecht",
+      "Partnerships Lead",
+      20,
+      5,
+      2,
+      "bjorn-brecht-270",
+      ""
+    ],
+    [
+      "Sam Novak",
+      "Management Consultant",
+      17,
+      15,
+      3,
+      "sam-novak-271",
+      ""
+    ],
+    [
+      "Mei Farouk",
+      "Venture Capital Analyst",
+      2,
+      0,
+      4,
+      "mei-farouk-272",
+      ""
+    ],
+    [
+      "Omar Rao",
+      "Professor of Geography",
+      6,
+      4,
+      3,
+      "omar-rao-273",
+      ""
+    ],
+    [
+      "Elias Oduya",
+      "Head of Mapping",
+      25,
+      1,
+      1,
+      "elias-oduya-274",
+      ""
+    ],
+    [
+      "Mateo Santoro",
+      "PhD Candidate, Remote Sensing",
+      6,
+      3,
+      5,
+      "mateo-santoro-275",
+      ""
+    ],
+    [
+      "Pavel Marchetti",
+      "Research Fellow, Climate Science",
+      4,
+      7,
+      3,
+      "pavel-marchetti-276",
+      ""
+    ],
+    [
+      "Zainab Marchetti",
+      "Perception Lead",
+      11,
+      1,
+      2,
+      "zainab-marchetti-277",
+      ""
+    ],
+    [
+      "Noor Lindgren",
+      "VP of Data",
+      26,
+      12,
+      1,
+      "noor-lindgren-278",
+      ""
+    ],
+    [
+      "Astrid Halvorsen",
+      "Geospatial Intelligence Officer",
+      3,
+      3,
+      4,
+      "astrid-halvorsen-279",
+      ""
+    ],
+    [
+      "Camila Correia",
+      "Catastrophe Risk Analyst",
+      9,
+      0,
+      4,
+      "camila-correia-280",
+      ""
+    ],
+    [
+      "Hannah Santoro",
+      "Catastrophe Risk Analyst",
+      9,
+      0,
+      4,
+      "hannah-santoro-281",
+      ""
+    ],
+    [
+      "Zainab Bakker",
+      "Head of Commercial",
+      24,
+      1,
+      1,
+      "zainab-bakker-282",
+      ""
+    ],
+    [
+      "Sam Halvorsen",
+      "Principal",
+      2,
+      1,
+      2,
+      "sam-halvorsen-283",
+      ""
+    ],
+    [
+      "Mateo Reinhart",
+      "Head of Sustainability",
+      27,
+      7,
+      1,
+      "mateo-reinhart-284",
+      ""
+    ],
+    [
+      "Lukas Restrepo",
+      "Geodetic Surveyor",
+      16,
+      10,
+      4,
+      "lukas-restrepo-285",
+      ""
+    ],
+    [
+      "Leila Fischer",
+      "Geospatial Intelligence Officer",
+      3,
+      3,
+      4,
+      "leila-fischer-286",
+      ""
+    ],
+    [
+      "Noor Olsen",
+      "Policy Adviser",
+      14,
+      8,
+      3,
+      "noor-olsen-287",
+      ""
+    ],
+    [
+      "Mateo Varga",
+      "Research Software Engineer",
+      4,
+      9,
+      4,
+      "mateo-varga-288",
+      ""
+    ],
+    [
+      "Sam Vranken",
+      "Analytics Engineer",
+      26,
+      12,
+      4,
+      "sam-vranken-289",
+      ""
+    ],
+    [
+      "Astrid Rao",
+      "Development Director",
+      15,
+      11,
+      1,
+      "astrid-rao-290",
+      ""
+    ],
+    [
+      "Mateo Vos",
+      "Planning Officer",
+      21,
+      8,
+      4,
+      "mateo-vos-291",
+      ""
+    ],
+    [
+      "Rosa Keita",
+      "Head of Sales",
+      7,
+      5,
+      1,
+      "rosa-keita-292",
+      ""
+    ],
+    [
+      "Arjun Ellison",
+      "Principal",
+      2,
+      1,
+      2,
+      "arjun-ellison-293",
+      ""
+    ],
+    [
+      "Ines Aziz",
+      "Quantitative Analyst",
+      5,
+      1,
+      4,
+      "ines-aziz-294",
+      ""
+    ],
+    [
+      "Freya Sorensen",
+      "Senior Urban Planner",
+      28,
+      6,
+      3,
+      "freya-sorensen-295",
+      ""
+    ],
+    [
+      "Lukas Bakker",
+      "Data Analyst",
+      14,
+      12,
+      4,
+      "lukas-bakker-296",
+      ""
+    ],
+    [
+      "Anika Novak",
+      "Financial Controller",
+      5,
+      0,
+      6,
+      "anika-novak-297",
+      ""
+    ],
+    [
+      "Hannah Restrepo",
+      "Urban Data Scientist",
+      18,
+      17,
+      4,
+      "hannah-restrepo-298",
+      ""
+    ],
+    [
+      "Ines Oyelaran",
+      "Geospatial Intelligence Officer",
+      3,
+      3,
+      4,
+      "ines-oyelaran-299",
+      ""
+    ],
+    [
+      "Lena Haugen",
+      "Development Director",
+      15,
+      11,
+      1,
+      "lena-haugen-300",
+      ""
+    ],
+    [
+      "Stefan Kowalski",
+      "Operations Director",
+      1,
+      2,
+      1,
+      "stefan-kowalski-301",
+      ""
+    ],
+    [
+      "Arjun Vos",
+      "Venture Capital Analyst",
+      2,
+      0,
+      4,
+      "arjun-vos-302",
+      ""
+    ],
+    [
+      "Idris Nandakumar",
+      "Geospatial Intelligence Officer",
+      3,
+      3,
+      4,
+      "idris-nandakumar-303",
+      ""
+    ],
+    [
+      "Bjorn Diallo",
+      "Staff Software Engineer",
+      0,
+      9,
+      3,
+      "bjorn-diallo-304",
+      ""
+    ],
+    [
+      "Saoirse Aziz",
+      "Autonomous Vehicle Engineer",
+      8,
+      20,
+      4,
+      "saoirse-aziz-305",
+      ""
+    ],
+    [
+      "Peter Kowalski",
+      "Investment Associate",
+      10,
+      0,
+      4,
+      "peter-kowalski-306",
+      ""
+    ],
+    [
+      "Devon Lindholm",
+      "Catastrophe Risk Analyst",
+      9,
+      0,
+      4,
+      "devon-lindholm-307",
+      ""
+    ],
+    [
+      "Marcus Oduya",
+      "Planning Officer",
+      21,
+      8,
+      4,
+      "marcus-oduya-308",
+      ""
+    ],
+    [
+      "Yusuf Brecht",
+      "Investment Associate",
+      10,
+      0,
+      4,
+      "yusuf-brecht-309",
+      ""
+    ],
+    [
+      "Yusuf Varga",
+      "Management Consultant",
+      17,
+      15,
+      3,
+      "yusuf-varga-310",
+      ""
+    ],
+    [
+      "Saoirse Diallo",
+      "Fleet Operations Manager",
+      8,
+      2,
+      2,
+      "saoirse-diallo-311",
+      ""
+    ],
+    [
+      "Camila Lindholm",
+      "Signalling Engineer",
+      22,
+      6,
+      4,
+      "camila-lindholm-312",
+      ""
+    ],
+    [
+      "Leila Okafor",
+      "Founder CEO",
+      31,
+      11,
+      0,
+      "leila-okafor-313",
+      ""
+    ],
+    [
+      "Britta Aziz",
+      "Process Engineer",
+      1,
+      2,
+      4,
+      "britta-aziz-314",
+      ""
+    ],
+    [
+      "Arjun Kowalski",
+      "Quantitative Analyst",
+      5,
+      1,
+      4,
+      "arjun-kowalski-315",
+      ""
+    ],
+    [
+      "Tomas Nwosu",
+      "Head of Commercial",
+      24,
+      1,
+      1,
+      "tomas-nwosu-316",
+      ""
+    ],
+    [
+      "Priya Ellison",
+      "Principal",
+      2,
+      1,
+      2,
+      "priya-ellison-317",
+      ""
+    ],
+    [
+      "Hannah Haddad",
+      "Operations Director",
+      1,
+      2,
+      1,
+      "hannah-haddad-318",
+      ""
+    ],
+    [
+      "Ines Castellanos",
+      "GIS Manager",
+      12,
+      4,
+      2,
+      "ines-castellanos-319",
+      ""
+    ],
+    [
+      "Clara Sorensen",
+      "Cloud Architect",
+      0,
+      14,
+      3,
+      "clara-sorensen-320",
+      ""
+    ],
+    [
+      "Elias Lindqvist",
+      "Staff Software Engineer",
+      0,
+      9,
+      3,
+      "elias-lindqvist-321",
+      ""
+    ],
+    [
+      "Valeria Rao",
+      "PhD Candidate, Remote Sensing",
+      6,
+      3,
+      5,
+      "valeria-rao-322",
+      ""
+    ],
+    [
+      "Nina Molnar",
+      "Cloud Architect",
+      0,
+      14,
+      3,
+      "nina-molnar-323",
+      ""
+    ],
+    [
+      "Kenji Aziz",
+      "Content Lead",
+      23,
+      22,
+      2,
+      "kenji-aziz-324",
+      ""
+    ],
+    [
+      "Freya Marchetti",
+      "Product Manager",
+      0,
+      18,
+      2,
+      "freya-marchetti-325",
+      ""
+    ],
+    [
+      "Kenji Halvorsen",
+      "Student, MSc Geographic Information Science",
+      -1,
+      4,
+      5,
+      "kenji-halvorsen-326",
+      ""
+    ],
+    [
+      "Diego Marchetti",
+      "Epidemiologist",
+      19,
+      13,
+      6,
+      "diego-marchetti-327",
+      ""
+    ],
+    [
+      "Lukas Kaur",
+      "Product Manager",
+      0,
+      18,
+      2,
+      "lukas-kaur-328",
+      ""
+    ],
+    [
+      "Stefan Lindqvist",
+      "Remote Sensing Scientist",
+      30,
+      3,
+      4,
+      "stefan-lindqvist-329",
+      ""
+    ],
+    [
+      "Greta Takahashi",
+      "Staff Software Engineer",
+      0,
+      9,
+      3,
+      "greta-takahashi-330",
+      ""
+    ],
+    [
+      "Imani Nandakumar",
+      "Fleet Operations Manager",
+      8,
+      2,
+      2,
+      "imani-nandakumar-331",
+      ""
+    ],
+    [
+      "Noor Aziz",
+      "Geospatial Intelligence Officer",
+      3,
+      3,
+      4,
+      "noor-aziz-332",
+      ""
+    ],
+    [
+      "Yusuf Petrov",
+      "VP of Data",
+      26,
+      12,
+      1,
+      "yusuf-petrov-333",
+      ""
+    ],
+    [
+      "Sofia Sorensen",
+      "GIS Manager",
+      12,
+      4,
+      2,
+      "sofia-sorensen-334",
+      ""
+    ],
+    [
+      "Dmitri Nandakumar",
+      "Head of Sales",
+      7,
+      5,
+      1,
+      "dmitri-nandakumar-335",
+      ""
+    ],
+    [
+      "Yara Oyelaran",
+      "Product Manager",
+      0,
+      18,
+      2,
+      "yara-oyelaran-336",
+      ""
+    ],
+    [
+      "Sofia Mendes",
+      "Perception Lead",
+      11,
+      1,
+      2,
+      "sofia-mendes-337",
+      ""
+    ],
+    [
+      "Arjun Olsen",
+      "Analytics Engineer",
+      26,
+      12,
+      4,
+      "arjun-olsen-338",
+      ""
+    ],
+    [
+      "Aisha Rossi",
+      "Financial Controller",
+      5,
+      0,
+      6,
+      "aisha-rossi-339",
+      ""
+    ],
+    [
+      "Diego Castellanos",
+      "Angel investor",
+      -1,
+      1,
+      6,
+      "diego-castellanos-340",
+      ""
+    ],
+    [
+      "Devon Diallo",
+      "Head of Commercial",
+      24,
+      1,
+      1,
+      "devon-diallo-341",
+      ""
+    ],
+    [
+      "Mei Demir",
+      "Technical Recruiter",
+      13,
+      16,
+      6,
+      "mei-demir-342",
+      ""
+    ],
+    [
+      "Saoirse Olsen",
+      "Venture Capital Analyst",
+      2,
+      0,
+      4,
+      "saoirse-olsen-343",
+      ""
+    ],
+    [
+      "Sofia Novak",
+      "Cartographer",
+      25,
+      19,
+      4,
+      "sofia-novak-344",
+      ""
+    ],
+    [
+      "Devon Oduya",
+      "Cartographer",
+      25,
+      19,
+      4,
+      "devon-oduya-345",
+      ""
+    ],
+    [
+      "Arjun Petrov",
+      "Founder CEO",
+      31,
+      11,
+      0,
+      "arjun-petrov-346",
+      ""
+    ],
+    [
+      "Lukas Halvorsen",
+      "Cloud Architect",
+      0,
+      14,
+      3,
+      "lukas-halvorsen-347",
+      ""
+    ],
+    [
+      "Britta Haugen",
+      "Research Software Engineer",
+      4,
+      9,
+      4,
+      "britta-haugen-348",
+      ""
+    ],
+    [
+      "Devon Lindqvist",
+      "Head of Talent",
+      13,
+      1,
+      1,
+      "devon-lindqvist-349",
+      ""
+    ]
+  ]
+}

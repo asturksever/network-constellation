@@ -26,6 +26,7 @@ const MODULE_ORDER = [
   'src/taxonomy.js',
   'src/csv.js',
   'src/classify.js',
+  'src/build.js',
   'src/dom.js',
   'src/ask.js',
   'src/graph.js',
