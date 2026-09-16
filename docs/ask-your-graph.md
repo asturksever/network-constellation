@@ -93,10 +93,21 @@ None of these are load-bearing. All of them make it feel finished.
 
 ## Open questions
 
-- **Payload.** `ask.js` scores against role + company + headline, but
-  `graph-data.json` currently drops the headline to stay at 1.1 MB. Adding it back
-  costs roughly 800 KB. A trimmed search field, or an inverted index built at
-  build time, probably beats shipping raw text.
+- **Payload — settled, by moving the build.** This used to be the blocking
+  question: `ask.js` scores against role + company + headline, and
+  `graph-data.json` dropped the headline to stay at 1.1 MB, so the browser
+  would have scored on a third of the evidence. Four options were measured,
+  from shipping raw headlines (+749 KB) to a build-time inverted index
+  (+255 KB). None of them was needed. The classifier now runs in the browser on
+  the dropped CSV, so the rich objects are already in memory and nothing has to
+  be serialised at all. The one case that still ships text is the single-file
+  bundle, which carries only the three fields the compact tuples lack.
+- **Location and company type — added, with a caveat attached.** Neither exists
+  in a LinkedIn export, so they come from an optional pass that sends employer
+  names to Claude. Location is therefore an employer's headquarters and not a
+  person's home, which the UI states on every answer that uses it, and the
+  filter reports how many people it excluded for an employer it could not place.
+  What comes back is inference, so each record carries a confidence.
 - **Recall on the narrow ones.** Two matches for the dashcam question is precise
   but thin. Worth testing whether taxonomy-driven synonym expansion (walk the
   matched domain's own regex for sibling terms) recovers more without the noise.

@@ -3,15 +3,17 @@
 A 3D force-directed view of your LinkedIn connections, clustered by what people do.
 Static site, no framework, no bundler, no `node_modules`.
 
-**Starting a new iteration? Read [docs/next-iteration.md](docs/next-iteration.md)
-first.** It has the current state (pushed to a private GitHub repo, logos
-fetched, bundle stale), the one decision that is blocking the ask-your-graph UI
-with the payload sizes measured, and the ranked backlog behind it.
+The graph is built in the browser from a CSV the user drops in, and also by a
+Node script for local development. Both go through `src/build.js`. Nothing is
+uploaded; an optional pass sends employer names and question text to Anthropic
+with the user's own key.
 
 ## Run it
 
 ```bash
-npm run data     # data/followers.csv  -> data/graph-data.json
+npm run data     # data/followers.csv -> data/graph-data.json (+ people.json)
+npm run check    # node --check over every module
+npm test         # node:test
 npm run logos    # fetch employer logos -> logos/  (needs open internet, see below)
 npm run dev      # http://localhost:8080
 npm run bundle   # -> dist/network-constellation.html (single file, for publishing)
@@ -36,8 +38,16 @@ src/labels.js         domain labels projected from 3D, with collision culling
 src/highlight.js      the search-hit marker: ping, reticle and card, projected too
 src/logos.js          employer logos projected from 3D, sized by headcount
 src/ui.js             control panel, tooltip, status line
-src/main.js           boot: load data -> build world -> wire UI
-scripts/build-data.mjs     CSV -> compact graph JSON
+src/askui.js          the question box and its answer panel
+src/enrichui.js       the bring-your-own-key panel and its progress
+src/upload.js         landing state, drop zone, column mapper
+src/build.js          rows -> graph payload; the one path Node and the browser share
+src/store.js          IndexedDB: the built graph and the employer records
+src/llm.js            raw-fetch Anthropic client (see below for why not the SDK)
+src/enrich.js         employer names -> HQ and organisation type
+src/askllm.js         question -> extra filter constraints
+src/main.js           boot: find a graph -> build world -> wire UI
+scripts/build-data.mjs     CSV -> compact graph JSON (a thin wrapper over build.js)
 scripts/fetch-logos.mjs    employer name -> domain -> favicon -> logos/
 scripts/bundle.mjs         flatten everything into one publishable HTML
 ```
@@ -142,28 +152,52 @@ output on the 10,144-row headline export after that change.
 `src/ask.js` resolves a natural-language question to a structured filter and runs
 it locally — no model, no API key, 140 ms over 10k people. It works because
 `taxonomy.js` is bidirectional: the regexes that classify headlines also parse
-questions. An LLM is an optional layer over the ~20 survivors, never a dependency.
-Design note and measured results: `docs/ask-your-graph.md`.
+questions. An LLM is an optional layer that reads
+the question, never the corpus. Design note and measured results:
+`docs/ask-your-graph.md`. The UI is `src/askui.js`; it prints `describe(filter)`
+above every answer, which is the whole reason that function exists.
 
 Two things there are load-bearing and easy to undo by accident. Subject domains
 and `FUNCTION_DOMAINS` are intersected, not unioned — union returns every
 salesperson you know. And free terms are IDF-weighted, or common words bury the
 distinctive ones.
 
+## The optional Anthropic call
+
+`src/llm.js` uses raw `fetch`, not the SDK, and that is deliberate: there is no
+bundler here, and the import stripper cannot flatten a default import. The day a
+third-party ESM package genuinely has to be imported from `src/`, replace the
+stripper with esbuild rather than teaching it new tricks.
+
+Two passes, both optional and both off without a key. `enrich.js` sends employer
+names in batches of 40 and gets back headquarters and organisation type.
+`askllm.js` sends the question text and gets back extra filter constraints,
+which are validated against the taxonomy before use and shown in the readout
+under "Claude added". Nothing else is ever sent — no person's name, headline,
+slug or email — and the payloads are assembled from strings rather than from
+people so they cannot drift.
+
+Location is a hard gate, so it excludes everyone whose employer could not be
+placed; the answer reports that count rather than swallowing it. Organisation
+type never excludes anyone, but it does satisfy the function gate, because
+"Partner" at a firm identified as a venture capital firm is exactly who the
+question means and their headline will never say "invest".
+
 ## Roadmap
 
-1. **Reusable tool** — file input, run `classify.js` in the browser, no baked-in
-   data. The shared modules are already shaped for this; what's missing is a
-   drop zone, a column mapper, and moving `build-data.mjs`'s aggregation step
-   into a module both hosts can call.
-0. **Logo coverage** — `fetch-logos.mjs` maps ~70 well-known employers to domains
+1. **Logo coverage** — `fetch-logos.mjs` maps ~70 well-known employers to domains
    by hand and guesses the rest as `slug.com`. Extend `DOMAINS` there when a hub
-   you care about shows a bare sphere; misses are silent by design.
-2. **Better clustering & filters** — seniority layering, multi-domain membership
-   (people currently sit in one cluster though `domains` holds all matches),
-   a company-centric view, saved views.
-3. **Visual polish** — bloom, better materials, an intro animation, node halos,
-   screenshot export.
+   you care about shows a bare sphere; misses are silent by design. Fetching
+   only works from a normal terminal, never from a sandbox.
+2. **Multi-domain membership** — `classify()` already returns every matching
+   domain in `domains`, but a person sits in exactly one cluster. Showing the
+   others, even as faint secondary links, would be more truthful.
+3. **Explaining a shortlist with the model.** Deferred on purpose: the `why[]`
+   trail already carries the evidence, and it would be the first time per-person
+   text left the browser, which muddies a privacy story that is currently one
+   sentence long.
+4. **Visual polish** — bloom, better materials, an intro animation, screenshot
+   export.
 
 ## Housekeeping
 
