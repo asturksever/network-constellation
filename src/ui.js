@@ -1,9 +1,7 @@
 // Control panel, tooltip and status line. Everything here talks to the world
 // object returned by createConstellation and knows nothing about three.js.
 
-const fmt = n => n.toLocaleString('en-GB');
-const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const $ = id => document.getElementById(id);
+import { fmt, esc, $ } from './dom.js';
 
 export function wireUI(world, D, hit) {
   /* ---- tooltip ---- */
@@ -13,7 +11,7 @@ export function wireUI(world, D, hit) {
   world.graph.onNodeHover(n => {
     scene.style.cursor = n && n.t === 'p' && n.slug ? 'pointer' : 'default';
     if (!n) { tip.classList.remove('on'); return; }
-    tip.innerHTML = describe(n, D);
+    tip.innerHTML = tipHtml(n, D);
     tip.classList.add('on');
   });
 
@@ -201,7 +199,7 @@ function row(color, label, count, di) {
     `<span class="lgi-label">${esc(label)}</span><span class="lgn">${fmt(count)}</span></${tag}>`;
 }
 
-function describe(n, D) {
+function tipHtml(n, D) {
   if (n.t === 'root') {
     return '<span class="tn">' + esc(n.name) + '</span>' +
       '<span class="tr">Everyone here follows this account</span>';

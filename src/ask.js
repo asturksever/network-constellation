@@ -88,11 +88,16 @@ export function resolveQuery(question) {
 
   const facets = FACETS.filter(([, re]) => hits(re)).map(f => f[0]);
 
-  // a rank floor only when the question actually asks for seniority
+  // A rank floor only when the question actually asks for seniority.
+  //
+  // SENIORITY and SEN_ORDER are NOT the same order — SENIORITY runs
+  // ... Senior IC, Student, IC (match priority) while SEN_ORDER runs
+  // ... Senior IC, IC, Student (actual rank). Store the resolved name and look
+  // it up, or "directors in insurance" quietly admits individual contributors.
   let minRank = null;
-  for (let i = 0; i < SENIORITY.length; i++) {
-    if (i > 4) break;                       // student/IC tiers aren't a "floor"
-    if (hits(SENIORITY[i][1])) { minRank = i; break; }
+  for (let i = 0; i < SENIORITY.length && i <= 3; i++) {
+    // Only Founder..Senior IC are floors; student and IC tiers are not.
+    if (hits(SENIORITY[i][1])) { minRank = SEN_ORDER.indexOf(SENIORITY[i][0]); break; }
   }
 
   // leftover words carry the specifics the taxonomy has no bucket for

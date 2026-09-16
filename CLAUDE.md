@@ -37,8 +37,6 @@ src/highlight.js      the search-hit marker: ping, reticle and card, projected t
 src/logos.js          employer logos projected from 3D, sized by headcount
 src/ui.js             control panel, tooltip, status line
 src/main.js           boot: load data -> build world -> wire UI
-scripts/pull-followers.js  paste into the browser console to pull a fresh CSV
-                           (followers only — connections come from the export)
 scripts/build-data.mjs     CSV -> compact graph JSON
 scripts/fetch-logos.mjs    employer name -> domain -> favicon -> logos/
 scripts/bundle.mjs         flatten everything into one publishable HTML
@@ -70,11 +68,11 @@ with `--die-with-parent` after every command.
 this looked fine when published and was mojibake for anyone who opened the built
 file off disk. Don't drop it.
 
-**The pull uses a private endpoint.** `scripts/pull-followers.js` calls
-LinkedIn's internal Voyager GraphQL API with the logged-in session cookie. It is
-undocumented and the `queryId` changes without notice. When a pull returns
-nothing, open the followers page, watch the network tab while clicking "Show
-more results", and copy the fresh `queryId` across. Keep the inter-page delay.
+**One top-level name per module.** Every module is concatenated into a single
+scope, so two modules declaring the same `const` is a SyntaxError in the bundle
+and perfectly legal in the browser — the failure only appears in the built file.
+`bundle.mjs` checks for this and refuses. `$`, `esc` and `fmt` live in
+`src/dom.js` for exactly this reason; import them, never redeclare them.
 
 ## Two input shapes
 

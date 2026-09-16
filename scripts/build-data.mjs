@@ -7,7 +7,7 @@
 // makes nodes clickable. Column names are matched loosely, and two shapes are
 // understood without any flags:
 //
-//   a headline export   Name / Full headline / Profile URL  (scripts/pull-followers.js)
+//   a headline export   Name / Full headline / Profile URL
 //   LinkedIn's own      First Name, Last Name, URL, Company, Position
 //
 // The second is what you get from Settings -> Get a copy of your data, and it

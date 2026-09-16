@@ -18,8 +18,15 @@ import { dirname } from 'node:path';
 const OUT = process.argv[2] || 'dist/network-constellation.html';
 const DATA = 'data/graph-data.json';
 
+// Dependency order. taxonomy/csv/classify must precede ask.js: without them the
+// bundled ask.js referenced an undefined DOMAINS, which went unnoticed only
+// because nothing called ask() yet.
 const MODULE_ORDER = [
   'src/palette.js',
+  'src/taxonomy.js',
+  'src/csv.js',
+  'src/classify.js',
+  'src/dom.js',
   'src/ask.js',
   'src/graph.js',
   'src/labels.js',
@@ -78,7 +85,29 @@ function strip(file) {
   }
   src = src.replace(/^\s*import\s+[^;]*?;\s*$/gms, '');
   src = src.replace(/^(\s*)export\s+/gm, '$1');
+  recordDeclarations(file, src);
   return `\n/* ===== ${file} ===== */\n${src.trim()}\n`;
+}
+
+// Every module lands in one shared scope, so two modules declaring the same
+// top-level name is a SyntaxError in the bundle and perfectly fine in the browser
+// — the failure only shows up in the built file. Catch it here instead.
+const declaredIn = new Map();
+function recordDeclarations(file, src) {
+  const re = /^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/gm;
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    const name = m[1];
+    const prev = declaredIn.get(name);
+    if (prev && prev !== file) {
+      console.error(
+        `Both ${prev} and ${file} declare a top-level \`${name}\`. ` +
+        `The bundle flattens them into one scope, so this would not parse. Rename one.`
+      );
+      process.exit(1);
+    }
+    declaredIn.set(name, file);
+  }
 }
 
 const html = readFileSync('index.html', 'utf8');

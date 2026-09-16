@@ -71,11 +71,14 @@ npm run dev        # http://localhost:8080
 ### Other data sources
 
 `scripts/build-data.mjs` matches column names loosely and takes any CSV with a
-name and either a headline or a position. `scripts/pull-followers.js` is a
-browser-console script that pulls *followers* rather than connections, which the
-official export does not include — it calls LinkedIn's own internal endpoint
-with your logged-in session. It works, but it is undocumented and will break
-without notice. The official export is the path to prefer.
+name and either a headline or a position, so an export from somewhere else works
+if it carries those columns.
+
+The official export is the only LinkedIn path this project supports. An earlier
+version shipped a console script that pulled *followers* through LinkedIn's
+internal API with your session cookie; it was undocumented, broke without notice
+and sat against LinkedIn's terms, so it is gone. Followers who are not
+connections are not available.
 
 ## What you're looking at
 
