@@ -20,6 +20,9 @@ export const AUTO_PERSON_STORAGE = 'nc.autoPerson';
 
 let dbPromise = null;
 
+/** Set when the database could not be opened, so the UI can say why nothing persists. */
+export const storeProblem = { message: null };
+
 function open() {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
@@ -32,9 +35,23 @@ function open() {
       if (!db.objectStoreNames.contains(PERSONS)) db.createObjectStore(PERSONS, { keyPath: 'key' });
       if (!db.objectStoreNames.contains(RESEARCH)) db.createObjectStore(RESEARCH, { keyPath: 'key' });
     };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-    req.onblocked = () => reject(new Error('Another tab is holding the database open.'));
+    // A version upgrade waits for every other tab to let go of the database.
+    // Without this, an old tab pins it open and a new tab's open() never
+    // settles — the page sits on "Loading…" for ever. So: release on request,
+    // and never wait more than a few seconds for the other side to do the same.
+    const watchdog = setTimeout(() => {
+      storeProblem.message = 'Another tab of this page is holding the browser database. Close it and reload to keep your data and Claude’s reads.';
+      reject(new Error(storeProblem.message));
+    }, 4000);
+    req.onsuccess = () => {
+      clearTimeout(watchdog);
+      storeProblem.message = null;
+      const db = req.result;
+      db.onversionchange = () => { db.close(); dbPromise = null; };
+      resolve(db);
+    };
+    req.onerror = () => { clearTimeout(watchdog); reject(req.error); };
+    req.onblocked = () => { clearTimeout(watchdog); reject(new Error('Another tab is holding the database open.')); };
   });
   // A failed open must not be remembered, or one transient error poisons every
   // later read and write for the life of the page.

@@ -9,7 +9,7 @@ import { createDetail } from './detail.js';
 import { renderOverview } from './overview.js';
 import { createLanding } from './upload.js';
 import { peopleFromTuples, hydratePeople } from './build.js';
-import { loadGraph, forgetAll } from './store.js';
+import { loadGraph, forgetAll, storeProblem } from './store.js';
 import { $ } from './dom.js';
 
 const DATA_URL = 'data/graph-data.json';
@@ -135,6 +135,10 @@ const boot = async () => {
   world.graph.cameraPosition({ x: 0, y: 0, z: 2400 });
 
   $('genDate').textContent = D.generatedAt || '';
+
+  // A blocked database is silent otherwise: the graph still draws from disk
+  // or the bundle, but nothing persists and every Claude read is repaid.
+  if (storeProblem.message) setTimeout(() => ui.say(storeProblem.message), 3000);
 
   // Kept here for the Ask UI to reach without another pass over the data.
   window.__NC = { world, D, people, ui, marker, detail };
