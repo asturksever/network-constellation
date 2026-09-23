@@ -33,9 +33,10 @@ export function renderOverview({ D, people, world }) {
     .slice(0, 3);
 
   const topFields = D.doms
-    .map((d, i) => ({ d, n: D.domCounts[i] }))
+    .map((d, i) => ({ d, i, n: D.domCounts[i] }))
     .filter(x => x.d !== 'Other' && x.d !== 'No headline')
     .slice(0, 3);
+  const topMax = topFields.length ? topFields[0].n : 1;
 
   let span = '';
   const dates = people.map(p => p.connectedOn).filter(Boolean);
@@ -56,10 +57,38 @@ export function renderOverview({ D, people, world }) {
         `<span class="ov-band"><span class="dot" style="background:${world.senColor[b.i]}"></span>` +
         `${esc(b.s)} <span class="ov-dim">${fmt(b.n)}</span></span>`).join('') +
     `</div>` +
+    // A ranked list: colour, name, count and share, with a bar scaled to the
+    // largest field so the three compare at a glance. A row isolates its field.
     (topFields.length
-      ? `<div class="ov-line"><span class="ov-k">Top fields</span>` +
-        topFields.map(x => `<span class="ov-field">${esc(x.d)} <span class="ov-dim">${fmt(x.n)}</span></span>`).join('') +
+      ? `<div class="ov-fields"><span class="ov-k">Top fields</span>` +
+        topFields.map((x, rank) => {
+          const share = total ? Math.round((x.n / total) * 100) : 0;
+          const colour = world.domColor[x.i];
+          return `<button type="button" class="ov-frow" data-di="${x.i}" title="Show only ${esc(x.d)}">` +
+            `<span class="ov-rank">${rank + 1}</span>` +
+            `<span class="dot" style="background:${colour}"></span>` +
+            `<span class="ov-fname">${esc(x.d)}</span>` +
+            `<span class="ov-fn">${fmt(x.n)}<span class="ov-dim"> · ${share}%</span></span>` +
+            `<span class="ov-fbar"><span style="width:${((x.n / topMax) * 100).toFixed(1)}%;background:${colour}"></span></span>` +
+            `</button>`;
+        }).join('') +
         `</div>`
       : '') +
     (span ? `<div class="ov-line"><span class="ov-k">Connected</span><span class="ov-field">${esc(span)}</span></div>` : '');
+
+  // Clicking a field row isolates it through the same select the panel uses,
+  // so the legend and the dropdown stay in step; clicking it again clears it.
+  const sel = $('domSel');
+  for (const row of el.querySelectorAll('.ov-frow')) {
+    row.addEventListener('click', () => {
+      if (!sel) return;
+      sel.value = sel.value === row.dataset.di ? '-1' : row.dataset.di;
+      sel.dispatchEvent(new Event('change'));
+      markRows();
+    });
+  }
+  const markRows = () => {
+    for (const row of el.querySelectorAll('.ov-frow')) row.classList.toggle('on', sel?.value === row.dataset.di);
+  };
+  sel?.addEventListener('change', markRows);
 }

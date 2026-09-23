@@ -310,13 +310,34 @@ button:active, .ares:active, .drow:active, .icon-btn:active, .linky:active { tra
 }
 #status.gone { opacity: 0; }
 
-#note {
+/* The edges caveat lives behind an "i": always one click away, never in the
+   way of the scene. */
+#noteWrap {
   position: fixed;
   bottom: 16px; right: 18px;
   z-index: 10;
-  max-width: 322px;
+}
+.info-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--hair);
+  background: var(--material-2);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  color: var(--ink-2);
+  font: italic 600 13px/1 Georgia, "Times New Roman", serif;
+  cursor: pointer;
+  box-shadow: var(--panel-shadow);
+  transition: color 150ms ease-out, background 150ms ease-out;
+}
+.info-btn:hover, .info-btn[aria-expanded="true"] { color: var(--ink); background: var(--material-3); }
+#note {
+  position: absolute;
+  right: 0; bottom: 38px;
+  width: 300px;
   margin: 0;
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--ink-2);
   line-height: 1.5;
   background: var(--material-2);
@@ -326,10 +347,16 @@ button:active, .ares:active, .drow:active, .icon-btn:active, .linky:active { tra
   border-left: 2px solid var(--s2);
   border-radius: 10px;
   padding: 10px 13px;
+  box-shadow: var(--panel-shadow);
+  transform-origin: 100% 100%;
+  animation: nc-note-in 200ms var(--ease-out);
 }
+#note[hidden] { display: none; }
 #note strong { color: var(--ink); font-weight: 600; }
+@keyframes nc-note-in { from { opacity: 0; transform: translateY(4px) scale(0.97); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #note { animation: nc-fade 150ms ease-out; } }
 
-@media (max-width: 900px) { #note { display: none; } }
+@media (max-width: 900px) { #noteWrap { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.01ms !important; }
@@ -750,7 +777,7 @@ body.landing-up #ctl,
 body.landing-up #meta,
 body.landing-up #tip,
 body.landing-up #status,
-body.landing-up #note { display: none; }
+body.landing-up #noteWrap { display: none; }
 
 /* ---------- the answer panel ---------- */
 /* Results live in their own column rather than inside #ctl. A matched headline
@@ -867,7 +894,7 @@ body.answering #meta { display: none; }
 
 /* The edges caveat sits where the answer panel lands, and while you are reading
    a shortlist the shortlist is the thing that matters. */
-body.answering #note { display: none; }
+body.answering #noteWrap { display: none; }
 
 /* ---------- enrich with Claude ---------- */
 
@@ -956,7 +983,7 @@ body.answering #note { display: none; }
 }
 #detail[hidden] { display: none; }
 body.detailing #meta { display: none; }
-body.detailing #note { display: none; }
+body.detailing #noteWrap { display: none; }
 /* A detail needs the full column unless it is sharing that column with an
    active answer. */
 /* A profile takes the answer's place: one thing on the right at a time. The
@@ -1179,3 +1206,37 @@ body.sheet-up { overflow: hidden; }
   box-shadow: 0 0 0 1px var(--hair), 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 .d-photo-wrap .d-name { margin: 0; }
+
+/* top fields: a ranked, clickable list */
+.ov-fields { display: flex; flex-direction: column; gap: 2px; }
+.ov-fields > .ov-k { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 3px; }
+.ov-frow {
+  display: grid;
+  /* rank · dot · name on the first line; bar and numbers beneath the name */
+  grid-template-columns: 12px 8px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "rank dot name name"
+    ".    .   bar  num";
+  align-items: center;
+  column-gap: 7px;
+  row-gap: 3px;
+  width: 100%;
+  padding: 6px 7px;
+  border: 0;
+  border-radius: var(--r-ctl);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease-out;
+}
+.ov-frow:hover { background: var(--fill-2); }
+.ov-frow.on { background: var(--fill); }
+.ov-rank { grid-area: rank; font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: right; }
+.ov-frow .dot { grid-area: dot; width: 8px; height: 8px; }
+.ov-fname { grid-area: name; font-size: 12px; font-weight: 500; line-height: 1.3; }
+.ov-fn { grid-area: num; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; min-width: 64px; }
+.ov-fn .ov-dim { font-weight: 400; }
+.ov-fbar { grid-area: bar; height: 4px; border-radius: 2px; background: var(--fill-2); overflow: hidden; }
+.ov-fbar span { display: block; height: 100%; border-radius: 2px; opacity: 0.85; }

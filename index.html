@@ -198,7 +198,10 @@
 
 <div id="tip"></div>
 <div id="status">Loading…</div>
-<p id="note">Edges join a person to their domain and to an employer named by two or more people. They are <strong>not</strong> connections between followers — LinkedIn doesn't expose those.</p>
+<div id="noteWrap">
+  <button type="button" class="info-btn" id="noteBtn" aria-expanded="false" aria-controls="note" aria-label="What the lines in this graph mean">i</button>
+  <p id="note" role="note" hidden>Lines join a person to their field and to an employer named by two or more people. They are <strong>not</strong> links between the people themselves &mdash; LinkedIn doesn't share who knows whom.</p>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js"></script>
 <script type="module" src="src/main.js"></script>

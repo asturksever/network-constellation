@@ -217,6 +217,16 @@ export function wireUI(world, D, hit) {
 
   addEventListener('resize', () => world.graph.width(innerWidth).height(innerHeight));
 
+  /* ---- the "i" behind which the edges caveat lives ---- */
+  const noteBtn = $('noteBtn');
+  const note = $('note');
+  if (noteBtn && note) {
+    const setNote = open => { note.hidden = !open; noteBtn.setAttribute('aria-expanded', String(open)); };
+    noteBtn.addEventListener('click', e => { e.stopPropagation(); setNote(note.hidden); });
+    document.addEventListener('click', e => { if (!note.hidden && !e.target.closest('#noteWrap')) setNote(false); });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && !note.hidden) setNote(false); });
+  }
+
   return { say, land, clearHit, showEveryone, setHooks: h => Object.assign(hooks, h) };
 }
 
