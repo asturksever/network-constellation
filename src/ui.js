@@ -99,14 +99,21 @@ export function wireUI(world, D, hit) {
    * panel both come through here — one camera path, one marker, one status
    * line, so the two features can never drift apart.
    */
+  /** Put every person back in the scene, and keep the density control honest. */
+  function showEveryone() {
+    if (world.state.density === 'all') return false;
+    segButtons.forEach(o => o.setAttribute('aria-pressed', String(o.dataset.d === 'all')));
+    world.setDensity('all');
+    return true;
+  }
+
   function land(n, ctx) {
     const index = ctx?.index ?? at;
     const total = ctx?.total ?? matches.length;
     world.setHit(n);
     if (!world.isVisible(n)) {
       // the person is filtered out of the scene — put them back before flying
-      segButtons.forEach(o => o.setAttribute('aria-pressed', String(o.dataset.d === 'all')));
-      world.setDensity('all');
+      showEveryone();
       setTimeout(() => { if (world.hit === n) { world.swoopTo(n); hit.show(n); } }, 420);
     } else {
       world.swoopTo(n);
@@ -115,7 +122,10 @@ export function wireUI(world, D, hit) {
     say(n.name + (total > 1
       ? `  ·  ${index + 1} of ${total}, Enter for next`
       : '  ·  found'));
-    hooks.landed?.(n);
+    // ctx.auto marks a landing nobody chose — a question's first result, a
+    // keystroke in the name search. Those keep the marker but do not open the
+    // side panel; an explicit click does.
+    hooks.landed?.(n, ctx);
   }
 
   function clearHit() {
@@ -133,7 +143,7 @@ export function wireUI(world, D, hit) {
       matches = world.findPeople(q).filter(n => n.x !== undefined);
       at = 0;
       if (!matches.length) { clearHit(); say('No one here matches "' + q + '"'); return; }
-      land(matches[0]);
+      land(matches[0], { auto: true });
     }, 240);
   });
 
@@ -141,7 +151,7 @@ export function wireUI(world, D, hit) {
     if (e.key === 'Enter' && matches.length > 1) {
       e.preventDefault();
       at = (at + (e.shiftKey ? matches.length - 1 : 1)) % matches.length;
-      land(matches[at]);
+      land(matches[at], { auto: true });
     }
     if (e.key === 'Escape') { search.value = ''; clearHit(); search.blur(); }
   });
@@ -203,11 +213,11 @@ export function wireUI(world, D, hit) {
     $('nComp').textContent = fmt(s.comps);
   });
   // a settle message must not stomp on 'found X' while a hit is on screen
-  world.onSettle(n => { if (!world.hit) say('Settled - ' + fmt(n) + ' nodes'); });
+  world.onSettle(n => { if (!world.hit && !world.hits) say('Settled · ' + fmt(n) + ' nodes'); });
 
   addEventListener('resize', () => world.graph.width(innerWidth).height(innerHeight));
 
-  return { say, land, clearHit, setHooks: h => Object.assign(hooks, h) };
+  return { say, land, clearHit, showEveryone, setHooks: h => Object.assign(hooks, h) };
 }
 
 function row(color, label, count, di) {

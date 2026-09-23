@@ -25,9 +25,32 @@ export async function wireEnrich({ D, people, onEmployers, say }) {
   let controller = null;
   let employers = await allEmployers();
 
+  /* ---- the settings sheet ---- */
+  const sheet = $('settings');
+  const openBtn = $('openSettings');
+  const openSheet = () => {
+    sheet.hidden = false;
+    document.body.classList.add('sheet-up');
+    setTimeout(() => (keyEl.value ? $('enrichRun') : keyEl)?.focus(), 60);
+  };
+  const closeSheet = () => {
+    sheet.hidden = true;
+    document.body.classList.remove('sheet-up');
+    openBtn?.focus();
+  };
+  openBtn?.addEventListener('click', openSheet);
+  $('settingsClose')?.addEventListener('click', closeSheet);
+  $('settingsScrim')?.addEventListener('click', closeSheet);
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !sheet.hidden) closeSheet(); });
+  // any "add a key" link anywhere on the page opens the same sheet
+  document.addEventListener('click', e => { if (e.target.closest('.open-settings')) openSheet(); });
+  const markKey = () => openBtn?.classList.toggle('has-key', Boolean(keyEl.value.trim()));
+  keyEl.addEventListener('input', markKey);
+
   // A key kept from last time, if the user asked for that.
   const saved = prefs.get(KEY_STORAGE);
   if (saved) { keyEl.value = saved; rememberEl.checked = true; }
+  markKey();
 
   // Whether clicking a person asks Claude about them. On by default; the
   // choice is remembered so switching it off sticks.
@@ -145,6 +168,7 @@ export async function wireEnrich({ D, people, onEmployers, say }) {
     get key() { return keyEl.value.trim(); },
     hasKey: () => Boolean(keyEl.value.trim()),
     autoPerson: () => autoEl.checked,
+    openSettings: openSheet,
     enrichOne: enrichEmployer,
     normKey
   };

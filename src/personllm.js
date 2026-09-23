@@ -22,7 +22,7 @@ const SENIORITY_READS = [
   'student or early career', 'unclear'
 ];
 
-function fnv1a(s) {
+export function fnv1a(s) {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);

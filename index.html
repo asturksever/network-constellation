@@ -5,10 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- Bounds where anything on this page can send data. The only origin it may
      talk to besides itself is Anthropic's API, and only once you paste a key. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <title>Network Constellation</title>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500&display=swap">
 <link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
@@ -63,48 +61,29 @@
       <p class="demo">No export to hand? <button type="button" class="linky" id="tryDemo">Open the demo</button> &mdash; 250 invented people, same machinery.</p>
     </div>
 
-    <p class="panel landing-privacy">Nothing is uploaded. If you later add your own Anthropic key, only <strong>employer names</strong> and your question text are sent &mdash; never people&rsquo;s names, emails or profile links.</p>
+    <p class="panel landing-privacy">Nothing is uploaded. Claude is optional, needs your own key, and only ever sees what Settings spells out &mdash; employer names and your questions by default, a name only when you press <strong>Research on the web</strong>. Never emails or profile links.</p>
   </div>
 </div>
 
 <div class="panel" id="ctl">
-  <h1>Network Constellation</h1>
-  <p class="sub">Your LinkedIn connections, arranged by what people do. Drag to orbit, scroll to zoom, click anyone or any employer for the full picture.</p>
+  <div class="ctl-head">
+    <h1>Network Constellation</h1>
+    <button type="button" class="icon-btn" id="openSettings" aria-label="Settings and API key" title="Settings">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9"/><path d="M17 12v4"/><path d="M20.5 12v3"/></svg>
+    </button>
+  </div>
+  <div id="overview"></div>
 
   <div class="grp">
     <span class="lab">Ask your network</span>
     <input type="search" id="ask" placeholder="anyone in satellite imagery licensing?" aria-describedby="askHint" autocomplete="off">
-    <span class="hint" id="askHint">Enter runs &middot; Enter again steps &middot; Esc clears</span>
+    <span class="hint" id="askHint">Enter runs &middot; Enter again steps &middot; click a result for the full picture</span>
   </div>
 
-  <div class="grp" id="enrichGrp">
-    <details id="enrichBox">
-      <summary>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9"/><path d="M17 12v4"/><path d="M20.5 12v3"/></svg>
-        <span>Enrich with Claude</span>
-        <span class="opt">optional</span>
-      </summary>
-      <div class="enrich-body">
-        <p class="ehelp">Your export has no location and no company type, so &ldquo;any VC in SF?&rdquo; can&rsquo;t be answered from it. Claude reads <strong>employer names only</strong> and returns headquarters and organisation type.</p>
-        <label class="elab" for="apiKey">Anthropic API key</label>
-        <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
-        <label class="chk"><input type="checkbox" id="rememberKey"> Remember on this device</label>
-        <label class="chk"><input type="checkbox" id="autoPerson" checked> Ask Claude about each person I click</label>
-        <p class="ehelp small">Sent to Anthropic: employer names, the text of your questions, and &mdash; with the switch above on &mdash; the role and headline of a person you click. Never people&rsquo;s names, emails or profile links. Each read is cached, so a person costs once. Use a key with a spend limit.</p>
-        <span class="lab">Scope</span>
-        <div class="seg" id="scopeSeg" role="group" aria-label="Enrichment scope">
-          <button type="button" data-scope="hubs" aria-pressed="true">Hubs</button>
-          <button type="button" data-scope="all" aria-pressed="false">All</button>
-        </div>
-        <div class="erow"><span id="scopeCount">—</span><span id="scopeCost">—</span></div>
-        <button type="button" class="primary" id="enrichRun">Enrich employers</button>
-        <div id="enrichProgress" hidden>
-          <div class="ebar"><span id="enrichBarFill"></span></div>
-          <div class="erow"><span id="enrichStat">—</span><button type="button" class="linky" id="enrichCancel">Cancel</button></div>
-        </div>
-        <p class="ehelp small" id="enrichKnown"></p>
-      </div>
-    </details>
+  <div class="grp">
+    <span class="lab">Find a person</span>
+    <input type="search" id="search" placeholder="Type a name…" aria-describedby="findHint" autocomplete="off">
+    <span class="hint" id="findHint">Enter cycles matches &middot; Esc clears</span>
   </div>
 
   <div class="grp">
@@ -129,12 +108,6 @@
     <select id="domSel" aria-label="Isolate a domain">
       <option value="-1">None — show all</option>
     </select>
-  </div>
-
-  <div class="grp">
-    <span class="lab">Find a person</span>
-    <input type="search" id="search" placeholder="Type a name…" aria-describedby="findHint" autocomplete="off">
-    <span class="hint" id="findHint">Enter cycles matches · Esc clears</span>
   </div>
 
   <div class="grp">
@@ -189,6 +162,38 @@
   <p id="askEmpty" hidden></p>
   <div id="askList"></div>
   <div class="ans-foot">Click a result to fly there</div>
+</div>
+
+<div id="settings" class="sheet" hidden>
+  <div class="scrim" id="settingsScrim"></div>
+  <div class="sheet-panel panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="d-head">
+      <span class="lab" id="settingsTitle">Settings</span>
+      <button type="button" class="d-close" id="settingsClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="sheet-body">
+    <div class="enrich-body">
+      <p class="ehelp">Your export has no location and no company type, so &ldquo;any VC in SF?&rdquo; can&rsquo;t be answered from it. With a key, Claude labels employers with headquarters and organisation type, reads headlines, and can research a person on the web when you ask.</p>
+      <label class="elab" for="apiKey">Anthropic API key</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+      <label class="chk"><input type="checkbox" id="rememberKey"> Remember on this device</label>
+      <label class="chk"><input type="checkbox" id="autoPerson" checked> Ask Claude about each person I click</label>
+      <p class="ehelp small">Sent to Anthropic: employer names, the text of your questions, and with the switch above on, the role and headline of a person you click. Only the <em>Research on the web</em> button on a person&rsquo;s panel ever sends a name, and only when you press it. Never emails or profile links. Every result is cached, so a person costs once. Use a key with a spend limit.</p>
+      <span class="lab">Scope</span>
+      <div class="seg" id="scopeSeg" role="group" aria-label="Enrichment scope">
+        <button type="button" data-scope="hubs" aria-pressed="true">Hubs</button>
+        <button type="button" data-scope="all" aria-pressed="false">All</button>
+      </div>
+      <div class="erow"><span id="scopeCount">—</span><span id="scopeCost">—</span></div>
+      <button type="button" class="primary" id="enrichRun">Enrich employers</button>
+      <div id="enrichProgress" hidden>
+        <div class="ebar"><span id="enrichBarFill"></span></div>
+        <div class="erow"><span id="enrichStat">—</span><button type="button" class="linky" id="enrichCancel">Cancel</button></div>
+      </div>
+      <p class="ehelp small" id="enrichKnown"></p>
+    </div>
+    </div>
+  </div>
 </div>
 
 <div id="tip"></div>

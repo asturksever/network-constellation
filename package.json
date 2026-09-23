@@ -9,7 +9,7 @@
   },
   "scripts": {
     "data": "node scripts/build-data.mjs",
-    "dev": "python3 -m http.server 8080",
+    "dev": "node scripts/dev-server.mjs 8080",
     "bundle": "node scripts/bundle.mjs",
     "vendor": "mkdir -p vendor && curl -sL https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js -o vendor/3d-force-graph.min.js",
     "logos": "node scripts/fetch-logos.mjs",

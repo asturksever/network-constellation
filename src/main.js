@@ -6,6 +6,7 @@ import { wireUI } from './ui.js';
 import { wireAsk } from './askui.js';
 import { wireEnrich } from './enrichui.js';
 import { createDetail } from './detail.js';
+import { renderOverview } from './overview.js';
 import { createLanding } from './upload.js';
 import { peopleFromTuples, hydratePeople } from './build.js';
 import { loadGraph, forgetAll } from './store.js';
@@ -120,8 +121,13 @@ const boot = async () => {
   });
   ui.setHooks({
     node: n => detail.showNode(n),
-    landed: n => { if (n.t === 'p') detail.showNode(n); }
+    // A question's results and name-search keystrokes land automatically; the
+    // panel opens only for a landing the user chose.
+    landed: (n, ctx) => { if (n.t === 'p' && !ctx?.auto) detail.showNode(n); }
   });
+  ask.detail = detail;
+
+  renderOverview({ D, people, world });
 
   wireDataControls(found, landing);
 

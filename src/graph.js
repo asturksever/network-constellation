@@ -85,6 +85,12 @@ export function createConstellation(el, D, opts = {}) {
   let hitNode = null;
   const HIT_VAL = 8;      // ~2.5x a person's radius — spotted, not a wall
 
+  // Every match of the current question, lit together; everyone else drops to
+  // the isolate ghost, so an answer reads as a constellation within the
+  // constellation. Holds node objects, which is what the accessors receive.
+  let hitSet = null;
+  const SET_VAL = 2.2;
+
   const isVisible = n => {
     if (n.t !== 'p') return true;
     if (state.density === 'hubs') return false;
@@ -127,6 +133,10 @@ export function createConstellation(el, D, opts = {}) {
 
   const nodeColor = n => {
     if (n === hitNode) return PALETTE.hit;
+    if (hitSet) {
+      if (hitSet.has(n)) return mix(baseColor(n), '#ffffff', 0.55);
+      return n.t === 'root' ? PALETTE.root : PALETTE.ghost;
+    }
     if (state.isolate < 0) return baseColor(n);
     if (n.t === 'root') return PALETTE.root;
     if (n.di === state.isolate) {
@@ -135,17 +145,22 @@ export function createConstellation(el, D, opts = {}) {
     return PALETTE.ghost;
   };
 
-  const nodeVal = n => (n === hitNode ? HIT_VAL : n.val);
+  const nodeVal = n => (n === hitNode ? HIT_VAL : hitSet && hitSet.has(n) ? SET_VAL : n.val);
 
   // Tinting each spoke with its own cluster's hue is what turns the scene from
   // a grey web with coloured dots into something that reads as coloured light.
   const domLink = domColor.map(c => fade(c, 0.13));
   const isoLink = domColor.map(c => fade(c, 0.34));
+  const setLink = domColor.map(c => fade(c, 0.45));
 
   const linkColor = l => {
     // the hit's two spokes trace it back to its domain and its employer
     if (hitNode && (l.source === hitNode || l.target === hitNode)) return PALETTE.hitLink;
     const di = l.source?.di ?? l.target?.di;
+    if (hitSet) {
+      if (hitSet.has(l.source) || hitSet.has(l.target)) return di == null ? PALETTE.hitLink : setLink[di];
+      return 'rgba(238,242,245,0.018)';
+    }
     if (state.isolate >= 0) {
       return di === state.isolate ? isoLink[di] : 'rgba(238,242,245,0.018)';
     }
@@ -185,6 +200,25 @@ export function createConstellation(el, D, opts = {}) {
     if (!rs.length) return;
     const r = rs[Math.floor(rs.length * 0.93)] || rs[rs.length - 1];
     G.cameraPosition({ x: 0, y: 0, z: Math.max(260, r * 2.15) }, { x: 0, y: 0, z: 0 }, ms);
+  }
+
+  /**
+   * Frame an arbitrary set of nodes — the lit results of a question — by their
+   * own spread, the same way a cluster is framed: 90th-percentile radius from
+   * the centroid, camera pulled back along the centroid's own direction so it
+   * never lands inside the set.
+   */
+  function frameNodes(list, ms = 900) {
+    const pts = list.filter(n => n.x !== undefined);
+    if (!pts.length) return;
+    const c = pts.reduce((a, n) => ({ x: a.x + n.x, y: a.y + n.y, z: a.z + n.z }), { x: 0, y: 0, z: 0 });
+    c.x /= pts.length; c.y /= pts.length; c.z /= pts.length;
+    const ds = pts.map(n => Math.hypot(n.x - c.x, n.y - c.y, n.z - c.z)).sort((a, b) => a - b);
+    const dist = Math.max(230, (ds[Math.floor(ds.length * 0.9)] || 90) * 2.8);
+    const r = Math.hypot(c.x, c.y, c.z);
+    const dir = r > 1 ? { x: c.x / r, y: c.y / r, z: c.z / r } : { x: 0, y: 0, z: 1 };
+    wantFrame = false;
+    G.cameraPosition({ x: c.x + dir.x * dist, y: c.y + dir.y * dist, z: c.z + dir.z * dist }, c, ms);
   }
 
   /** Frame one domain by its own spread, so the camera never lands inside it. */
@@ -245,6 +279,7 @@ export function createConstellation(el, D, opts = {}) {
     repaint,
     frameGraph,
     frameCluster,
+    frameNodes,
     flyTo,
     swoopTo,
     isVisible,
@@ -252,7 +287,7 @@ export function createConstellation(el, D, opts = {}) {
     onSettle(fn) {
       G.onEngineStop(() => {
         // never yank the camera off a search hit to re-frame the whole graph
-        if (wantFrame && !hitNode) { wantFrame = false; frameGraph(900); }
+        if (wantFrame && !hitNode && !hitSet) { wantFrame = false; frameGraph(900); }
         fn(G.graphData().nodes.length);
       });
     },
@@ -261,6 +296,13 @@ export function createConstellation(el, D, opts = {}) {
     setColorBy(mode) { state.colorBy = mode; repaint(); },
     get hit() { return hitNode; },
     setHit(n) { hitNode = n || null; if (hitNode) wantFrame = false; repaint(); },
+    get hits() { return hitSet; },
+    /** Light a set of nodes and dim the rest. Colour re-bind only; the layout is untouched. */
+    setHits(nodes) {
+      hitSet = nodes && nodes.size ? nodes : null;
+      if (hitSet) wantFrame = false;
+      repaint();
+    },
     setIsolate(di) {
       state.isolate = di;
       repaint();

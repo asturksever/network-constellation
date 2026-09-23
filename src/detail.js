@@ -13,6 +13,8 @@
 import { $, esc, fmt } from './dom.js';
 import { normKey } from './enrich.js';
 import { readPerson } from './personllm.js';
+import { researchPerson, researchKey, parseBrief, RESEARCH_HEADINGS } from './research.js';
+import { getResearch } from './store.js';
 import { SEN_ORDER } from './taxonomy.js';
 
 const MAX_COLLEAGUES = 8;
@@ -26,12 +28,15 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
 
   let current = null;      // { kind: 'person', p } | { kind: 'company', name }
   let inFlight = null;     // AbortController for the Claude read
+  let researching = null;  // its own controller, so the two never cancel each other
 
   const open = () => { panel.hidden = false; document.body.classList.add('detailing'); };
 
   function close() {
     inFlight?.abort();
     inFlight = null;
+    researching?.abort();
+    researching = null;
     current = null;
     panel.hidden = true;
     document.body.classList.remove('detailing');
@@ -74,7 +79,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
     return sec('Employer',
       `<span class="d-note">Not labelled yet. ${can
         ? 'One name is sent to Claude; well under a cent.'
-        : 'Add a key under Enrich with Claude to look it up.'}</span>` +
+        : '<button type="button" class="linky open-settings">Add a key</button> to look it up.'}</span>` +
       (can ? `<button type="button" class="primary d-label" data-name="${esc(name).replace(/"/g, '&quot;')}">Label ${esc(name)}</button>` : ''));
   }
 
@@ -118,6 +123,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
   function showPerson(p) {
     if (!p) return;
     inFlight?.abort();
+    researching?.abort();
     current = { kind: 'person', p };
     kindEl.textContent = 'Person';
 
@@ -155,6 +161,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
         : '') +
 
       sec("Claude's read · from the headline", `<div id="dRead"></div>`) +
+      sec('On the web', `<div id="dResearch"></div>`) +
 
       (p.connectedOn ? sec('Connected', `<span class="d-text">${esc(dateOf(p.connectedOn))}</span>`) : '');
 
@@ -164,6 +171,88 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
     open();
     body.scrollTop = 0;
     claudeRead(p, $('dRead'));
+    researchBlock(p, $('dResearch'));
+  }
+
+  /* ---------- research on the web ---------- */
+  /* Never automatic. This is the one action that sends a person's name
+     anywhere, so it is a button that says what it sends and what it costs. A
+     brief already in the cache is shown straight away, since that costs
+     nothing. */
+
+  async function researchBlock(p, el) {
+    if (!el) return;
+    const cached = await getResearch(researchKey(p));
+    if (current?.p !== p) return;            // the panel moved on while we looked
+    if (cached) { renderBrief(p, el, { ...cached, cached: true }); return; }
+    if (!getKey?.()) {
+      el.innerHTML = `<span class="d-note"><button type="button" class="linky open-settings">Add a key</button> to research this person on the public web.</span>`;
+      return;
+    }
+    el.innerHTML =
+      `<button type="button" class="primary d-research">Research on the web</button>` +
+      `<span class="d-note">Sends this person’s name, headline and employer to Claude, which searches the public web. About $0.10–$0.30. Cached afterwards.</span>`;
+    el.querySelector('.d-research').addEventListener('click', () => fetchResearch(p, el, false));
+  }
+
+  async function fetchResearch(p, el, force) {
+    const key = getKey?.();
+    if (!key) return;
+    researching?.abort();
+    const controller = new AbortController();
+    researching = controller;
+    el.innerHTML = status('researching… this can take a minute or two');
+    try {
+      const r = await researchPerson({
+        apiKey: key, person: p, employer: employerOf(p.company), signal: controller.signal, force
+      });
+      if (controller.signal.aborted) return;
+      renderBrief(p, el, r);
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      el.innerHTML = status(err?.message || 'The research did not complete.', true) +
+        `<button type="button" class="linky d-again">Try again</button>`;
+      el.querySelector('.d-again')?.addEventListener('click', () => fetchResearch(p, el, true));
+    } finally {
+      if (researching === controller) researching = null;
+    }
+  }
+
+  const briefText = t => esc(t)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+
+  function renderBrief(p, el, r) {
+    const { sections } = parseBrief(r.text);
+    const parts = [];
+    if (sections.preamble) parts.push(`<p class="d-brief-pre">${briefText(sections.preamble)}</p>`);
+    for (const h of RESEARCH_HEADINGS) {
+      if (!sections[h]) continue;
+      parts.push(`<div class="d-brief-sec"><span class="d-sub">${esc(h)}</span><p class="d-text">${briefText(sections[h])}</p></div>`);
+    }
+    const conf = r.confidence || 'low';
+    parts.push(
+      `<div class="d-conf d-conf-${conf}">Confidence ${esc(conf)}` +
+      (sections.confidenceWhy ? ` · <span>${esc(sections.confidenceWhy)}</span>` : '') + `</div>`);
+    if (r.sources?.length) {
+      parts.push(`<span class="d-sub">Sources</span><ol class="d-sources">` +
+        r.sources.map(src => {
+          let host = '';
+          try { host = new URL(src.url).hostname.replace(/^www\./, ''); } catch { /* keep blank */ }
+          return `<li><a href="${esc(src.url).replace(/"/g, '&quot;')}" target="_blank" rel="noopener">${esc(src.title)}</a>` +
+            (host ? ` <span class="d-dim">${esc(host)}</span>` : '') + `</li>`;
+        }).join('') + `</ol>`);
+    }
+    if (r.searchErrors?.length) {
+      parts.push(`<span class="d-note">Some searches did not run (${esc(r.searchErrors.join(', '))}); the brief may be thinner than usual.</span>`);
+    }
+    parts.push(
+      `<span class="d-note">Researched ${esc(dateOf(r.researchedAt))} · ${r.searches || 0} searches · ` +
+      (r.cached ? 'from an earlier run, no cost' : `$${(r.cost || 0).toFixed(2)}`) +
+      ` · <button type="button" class="linky d-again">Research again</button></span>`);
+    el.innerHTML = parts.join('');
+    el.querySelector('.d-again')?.addEventListener('click', () => fetchResearch(p, el, true));
   }
 
   function wireCompanyLinks() {
@@ -175,7 +264,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
   async function claudeRead(p, el) {
     if (!el) return;
     const key = getKey?.();
-    if (!key) { el.innerHTML = status('Add a key under Enrich with Claude to get a read of this headline.'); return; }
+    if (!key) { el.innerHTML = `<span class="d-note"><button type="button" class="linky open-settings">Add a key</button> to get Claude’s read of this headline.</span>`; return; }
     if (!autoPerson?.()) {
       el.innerHTML = `<button type="button" class="linky" id="dAsk">Ask Claude about this person</button>` +
         `<span class="d-note">Sends the role, headline and employer name. Not the name, link or email.</span>`;
@@ -211,6 +300,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
   function showCompany(name, { fly = false } = {}) {
     if (!name) return;
     inFlight?.abort();
+    researching?.abort();
     current = { kind: 'company', name };
     kindEl.textContent = 'Employer';
 

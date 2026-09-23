@@ -15,7 +15,7 @@ npm run data     # data/followers.csv -> data/graph-data.json (+ people.json)
 npm run check    # node --check over every module
 npm test         # node:test
 npm run logos    # fetch employer logos -> logos/  (needs open internet, see below)
-npm run dev      # http://localhost:8080
+npm run dev      # http://localhost:8080 (scripts/dev-server.mjs, sends no-store)
 npm run bundle   # -> dist/network-constellation.html (single file, for publishing)
 npm run vendor   # optional: local copy of the force-graph lib for offline dev
 ```
@@ -47,6 +47,8 @@ src/llm.js            raw-fetch Anthropic client (see below for why not the SDK)
 src/enrich.js         employer names -> HQ and organisation type
 src/askllm.js         question -> extra filter constraints
 src/personllm.js      optional read of a clicked person's headline
+src/research.js       web research of a person, click-only; the one call that sends a name
+src/overview.js       the network overview at the top of the control panel
 src/detail.js          side panel for people and employer hubs
 src/main.js           boot: find a graph -> build world -> wire UI
 scripts/build-data.mjs     CSV -> compact graph JSON (a thin wrapper over build.js)
@@ -180,6 +182,13 @@ kept the automatic-read switch on: it sends role, headline, employer name and
 the employer facts already known locally. It never sends the person's name,
 slug or email, and the payload is built from an explicit object rather than the
 person record so it cannot drift.
+
+`research.js` is the fourth pass and the only one that sends a person's name:
+it runs solely from the **Research on the web** button on a person's panel,
+declares Claude's `web_search` tool, reads a many-block response (text blocks
+joined, `web_search_result_location` citations collected, a paused turn resumed
+by sending the assistant content back unchanged), and caches by a hash that
+includes the name. Cost is tokens plus $0.01 per search.
 
 Location is a hard gate, so it excludes everyone whose employer could not be
 placed; the answer reports that count rather than swallowing it. Organisation

@@ -35,6 +35,7 @@ const MODULE_ORDER = [
   'src/enrich.js',
   'src/askllm.js',
   'src/personllm.js',
+  'src/research.js',
   'src/graph.js',
   'src/labels.js',
   'src/highlight.js',
@@ -43,6 +44,7 @@ const MODULE_ORDER = [
   'src/askui.js',
   'src/enrichui.js',
   'src/detail.js',
+  'src/overview.js',
   'src/upload.js',
   'src/main.js'
 ];

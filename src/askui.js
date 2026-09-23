@@ -32,6 +32,7 @@ export function wireAsk({ world, D, people, ui }) {
 
   let results = [];
   let at = 0;
+  let landed = false;       // has the marker been put on a result yet?
   let employers = null;     // employer key -> { hqCity, orgType, ... }
   let inFlight = null;      // AbortController for the question-understanding call
 
@@ -42,6 +43,8 @@ export function wireAsk({ world, D, people, ui }) {
   function clear() {
     results = [];
     at = 0;
+    landed = false;
+    world.setHits(null);
     panel.hidden = true;
     document.body.classList.remove('answering');
     listEl.innerHTML = '';
@@ -109,7 +112,25 @@ export function wireAsk({ world, D, people, ui }) {
 
     emptyEl.hidden = true;
     render();
-    land(0);
+    light();
+  }
+
+  /**
+   * Every match lit in the scene at once, everyone else dimmed, and the camera
+   * pulled back to frame the set. Nobody is landed on yet: the list is the
+   * answer, and the marker waits for Enter or a click.
+   */
+  function light() {
+    landed = false;
+    api.detail?.close?.();
+    const nodes = new Set(results.map(nodeFor).filter(Boolean));
+    // people hidden by the density control cannot light up; put them back first
+    const restored = results.some(p => !world.isVisible(nodeFor(p))) && ui.showEveryone();
+    world.setHit(null);
+    world.setHits(nodes);
+    const frame = () => world.frameNodes([...nodes]);
+    if (restored) setTimeout(frame, 450); else frame();
+    ui.say(`${fmt(results.length)} lit · Enter steps through them`);
   }
 
   function renderQuery(filter, interpretation) {
@@ -134,8 +155,8 @@ export function wireAsk({ world, D, people, ui }) {
     if (filter.location.source === 'hint' && !employers?.size) {
       el.hidden = false;
       el.innerHTML = '<strong>Location was not applied.</strong> Your export has no ' +
-        'location in it. Add an API key under “Enrich with Claude” to look up where ' +
-        'employers are based.';
+        'location in it. <button type="button" class="linky open-settings">Add an API key</button> ' +
+        'to look up where employers are based.';
       return;
     }
     el.hidden = false;
@@ -147,7 +168,7 @@ export function wireAsk({ world, D, people, ui }) {
   function render() {
     listEl.innerHTML = results.slice(0, LIMIT).map((p, i) => row(p, i)).join('');
     [...listEl.querySelectorAll('.ares')].forEach(el => {
-      el.addEventListener('click', () => land(Number(el.dataset.i)));
+      el.addEventListener('click', () => land(Number(el.dataset.i), false));
     });
     mark();
   }
@@ -173,20 +194,22 @@ export function wireAsk({ world, D, people, ui }) {
     });
   }
 
-  function land(i) {
+  /** `auto` is a landing nobody chose (Enter-stepping); a click is not. */
+  function land(i, auto = true) {
     at = i;
     const p = results[at];
     if (!p) return;
     const node = nodeFor(p);
     if (!node) return;
-    ui.land(node, { index: at, total: results.length });
+    landed = true;
+    ui.land(node, { index: at, total: results.length, auto });
     mark();
   }
 
   function step(back) {
-    if (results.length < 2) return;
-    const n = Math.min(results.length, LIMIT);
-    land((at + (back ? n - 1 : 1)) % n);
+    if (!results.length) return;
+    if (!landed) { land(0); return; }
+    land((at + (back ? results.length - 1 : 1)) % results.length);
   }
 
   // Enter submits, and so does the native `search` event an <input
@@ -223,6 +246,7 @@ export function wireAsk({ world, D, people, ui }) {
 
   Object.assign(api, {
     run, clear, setEmployers,
+    detail: null,
     set enrichment(v) { api._enrich = v; },
     get enrichment() { return api._enrich; }
   });

@@ -43,8 +43,7 @@ No export to hand? The page has a demo built from 250 invented people.
 
 ### Running it yourself
 
-Node 18+ and Python 3 (only for the dev server). There is nothing to
-`npm install` — there are no dependencies.
+Node 18+. There is nothing to `npm install` — there are no dependencies.
 
 ```bash
 git clone https://github.com/asturksever/network-constellation.git
@@ -78,11 +77,15 @@ cannot be answered from the file alone. Paste an Anthropic API key into the
 **Enrich with Claude** panel and it will look up, for each employer, where the
 organisation is headquartered and what kind of organisation it is.
 
-**Three things can be sent to Anthropic:** employer names; the text of the
-questions you ask; and, if you leave **Ask Claude about each person I click**
-on, that person's role, headline, employer name and already-known employer
-facts. Never a person's name, profile link or email address. Each person read
-is cached in this browser, so a person costs once. Use a key with a spend limit.
+**Four things can be sent to Anthropic, and nothing else.** Employer names,
+and the text of the questions you ask. With "Ask Claude about each person I
+click" switched on, the role and headline of a person you click. And only when
+you press **Research on the web** on a person's panel, that person's name,
+headline and employer, so Claude can search the public web and write a sourced
+brief. That button is the one thing here that ever sends a name, it never runs
+on its own, and it says so beside the button. Never emails or profile links.
+Everything is cached in your browser, so a person costs once. Use a key with a
+spend limit.
 
 Roughly $0.06 for the employer hubs of a 10,000-person network, or $0.70 for
 every employer in it. Results are kept in your browser, so you pay once.
@@ -158,6 +161,7 @@ src/logos.js       employer logos projected from 3D, sized by headcount
 src/store.js       IndexedDB: your graph, employer facts and person reads, locally
 src/detail.js      side panel for people and employers
 src/personllm.js   optional Claude read of a clicked person's headline
+src/research.js    research a person on the web, on a button, cached
 src/upload.js      the landing state and column mapper
 src/ui.js          control panel, tooltip, status line
 src/askui.js       the question box and its answer panel
@@ -176,6 +180,8 @@ Two things do reach the network, and only if you ask for them:
 - **Enrichment** sends employer names and your question text to Anthropic, with
   your own API key. If you opt into automatic person reads, it also sends that
   person's role, headline, employer name and already-known employer facts.
+  **Research on the web**, a button on a person's panel, sends their name too,
+  and Claude then searches the public web. It never runs without a click.
   Never people's names, emails or profile links.
 - **`npm run logos`** sends employer-derived domain guesses to unavatar.io,
   DuckDuckGo and Google to fetch favicons. Company names, not people's. It is a

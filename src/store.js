@@ -6,11 +6,12 @@
 // preferences that are not worth a transaction.
 
 const DB_NAME = 'network-constellation';
-// v2 added the per-person reads. Upgrades only ever add stores.
-const DB_VERSION = 2;
+// v2 added the per-person reads, v3 the web research. Upgrades only add stores.
+const DB_VERSION = 3;
 const GRAPH = 'graph';
 const EMPLOYERS = 'employers';
 const PERSONS = 'persons';
+const RESEARCH = 'research';
 const CURRENT = 'current';
 
 export const KEY_STORAGE = 'nc.apiKey';
@@ -29,6 +30,7 @@ function open() {
       if (!db.objectStoreNames.contains(GRAPH)) db.createObjectStore(GRAPH);
       if (!db.objectStoreNames.contains(EMPLOYERS)) db.createObjectStore(EMPLOYERS, { keyPath: 'key' });
       if (!db.objectStoreNames.contains(PERSONS)) db.createObjectStore(PERSONS, { keyPath: 'key' });
+      if (!db.objectStoreNames.contains(RESEARCH)) db.createObjectStore(RESEARCH, { keyPath: 'key' });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -124,6 +126,24 @@ export async function getPerson(key) {
 
 export async function putPerson(record) {
   await tx(PERSONS, 'readwrite', store => { store.put(record); });
+}
+
+/* ---------- web research briefs ---------- */
+/* Keyed by a hash of name, headline and employer — the name is part of what is
+   sent here, so it is part of the key. */
+
+export async function getResearch(key) {
+  try {
+    return await tx(RESEARCH, 'readonly', (store, set) => {
+      request(store.get(key)).then(set);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function putResearch(record) {
+  await tx(RESEARCH, 'readwrite', store => { store.put(record); });
 }
 
 /* ---------- everything, gone ---------- */
