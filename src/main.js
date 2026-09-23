@@ -116,7 +116,6 @@ const boot = async () => {
     world, D, people, ui,
     getEmployers: () => enrichment.employers,
     getKey: () => enrichment.key,
-    autoPerson: () => enrichment.autoPerson(),
     enrichOne: name => enrichment.enrichOne(name)
   });
   ui.setHooks({

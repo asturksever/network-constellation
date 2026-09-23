@@ -46,7 +46,6 @@ src/store.js          IndexedDB: the built graph, employer records and person re
 src/llm.js            raw-fetch Anthropic client (see below for why not the SDK)
 src/enrich.js         employer names -> HQ and organisation type
 src/askllm.js         question -> extra filter constraints
-src/personllm.js      optional read of a clicked person's headline
 src/research.js       web research of a person, click-only; the one call that sends a name
 src/overview.js       the network overview at the top of the control panel
 src/detail.js          side panel for people and employer hubs
@@ -177,13 +176,9 @@ Three passes, all optional and all off without a key. `enrich.js` sends employer
 names in batches of 40 and gets back headquarters and organisation type.
 `askllm.js` sends the question text and gets back extra filter constraints,
 which are validated against the taxonomy before use and shown in the readout
-under "Claude added". `personllm.js` runs when the user clicks a person and has
-kept the automatic-read switch on: it sends role, headline, employer name and
-the employer facts already known locally. It never sends the person's name,
-slug or email, and the payload is built from an explicit object rather than the
-person record so it cannot drift.
+under "Claude added".
 
-`research.js` is the fourth pass and the only one that sends a person's name:
+`research.js` is the third, and the only one that sends a person's name:
 it runs solely from the **Enrich profile** button on a person's panel,
 declares Claude's `web_search` tool, reads a many-block response (text blocks
 joined, `web_search_result_location` citations collected, a paused turn resumed

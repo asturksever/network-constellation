@@ -34,7 +34,6 @@ const MODULE_ORDER = [
   'src/llm.js',
   'src/enrich.js',
   'src/askllm.js',
-  'src/personllm.js',
   'src/research.js',
   'src/graph.js',
   'src/labels.js',

@@ -4,7 +4,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { researchPayload, researchKey, parseBrief, RESEARCH_SYSTEM, RESEARCH_HEADINGS } from '../src/research.js';
-import { personKey } from '../src/personllm.js';
 
 const p = {
   i: 3, name: 'Marta Ellison', slug: 'marta-ellison-100', email: 'never@here',
@@ -21,10 +20,9 @@ test('the research payload carries the name, and nothing that is not stated', ()
   assert.ok(!text.includes('@'), 'no email');
 });
 
-test('the research key includes the name, so it differs from the headline read key', () => {
+test('the research key includes the name', () => {
   const twin = { ...p, name: 'Someone Else' };
   assert.notEqual(researchKey(p), researchKey(twin));
-  assert.equal(personKey(p), personKey(twin), 'the headline read is still shared by identical headlines');
   assert.match(researchKey(p), /^r:[0-9a-f]{8}$/);
 });
 
@@ -59,5 +57,5 @@ test('parseBrief splits a brief into sections and reads the confidence line', ()
   assert.match(sections.Role, /licensing/);
   assert.match(sections['Track record'], /conference/);
   assert.match(sections.Approach, /SAR/);
-  assert.match(sections.confidenceWhy, /employer matched/);
+  assert.match(sections.confidenceWhy, /^the employer matched/, 'the leading dash is stripped');
 });

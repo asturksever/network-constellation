@@ -68,9 +68,6 @@
 <div class="panel" id="ctl">
   <div class="ctl-head">
     <h1>Network Constellation</h1>
-    <button type="button" class="icon-btn" id="openSettings" aria-label="Settings and API key" title="Settings">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9"/><path d="M17 12v4"/><path d="M20.5 12v3"/></svg>
-    </button>
   </div>
   <div id="overview"></div>
 
@@ -173,12 +170,11 @@
     </div>
     <div class="sheet-body">
     <div class="enrich-body">
-      <p class="ehelp">Your export has no location and no company type, so &ldquo;any VC in SF?&rdquo; can&rsquo;t be answered from it. With a key, Claude labels employers with headquarters and organisation type, reads headlines, and can research a person on the web when you ask.</p>
+      <p class="ehelp">Your export has no location and no company type, so &ldquo;any VC in SF?&rdquo; can&rsquo;t be answered from it. With a key, Claude labels employers with headquarters and organisation type, and can enrich a person&rsquo;s profile from the public web when you ask.</p>
       <label class="elab" for="apiKey">Anthropic API key</label>
       <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
       <label class="chk"><input type="checkbox" id="rememberKey"> Remember on this device</label>
-      <label class="chk"><input type="checkbox" id="autoPerson" checked> Ask Claude about each person I click</label>
-      <p class="ehelp small">Sent to Anthropic: employer names, the text of your questions, and with the switch above on, the role and headline of a person you click. Only the <em>Enrich profile</em> button on a person&rsquo;s panel ever sends a name, and only when you press it. Never emails or profile links. Every result is cached, so a person costs once. Use a key with a spend limit.</p>
+      <p class="ehelp small">Sent to Anthropic: employer names and the text of your questions. A person&rsquo;s name, headline and employer only when you press <em>Enrich profile</em> on their panel. Never emails or profile links. Everything is saved in this browser, so nothing is paid for twice. Use a key with a spend limit.</p>
       <span class="lab">Scope</span>
       <div class="seg" id="scopeSeg" role="group" aria-label="Enrichment scope">
         <button type="button" data-scope="hubs" aria-pressed="true">Hubs</button>
@@ -199,6 +195,9 @@
 <div id="tip"></div>
 <div id="status">Loading…</div>
 <div id="noteWrap">
+  <button type="button" class="icon-btn corner-btn" id="openSettings" aria-label="Settings and API key" title="Settings">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9"/><path d="M17 12v4"/><path d="M20.5 12v3"/></svg>
+    </button>
   <button type="button" class="info-btn" id="noteBtn" aria-expanded="false" aria-controls="note" aria-label="What the lines in this graph mean">i</button>
   <p id="note" role="note" hidden>Lines join a person to their field and to an employer named by two or more people. They are <strong>not</strong> links between the people themselves &mdash; LinkedIn doesn't share who knows whom.</p>
 </div>

@@ -10,8 +10,17 @@
 // profile link, no email.
 
 import { callClaudeWithSearch, mock } from './llm.js';
-import { fnv1a } from './personllm.js';
 import { getResearch, putResearch } from './store.js';
+
+/** A short stable hash for cache keys. */
+function fnv1a(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(16).padStart(8, '0');
+}
 
 export const MODEL_RESEARCH = 'claude-opus-5';
 export const RESEARCH_MAX_SEARCHES = 8;
@@ -84,7 +93,7 @@ export function parseBrief(text) {
       continue;
     }
     const c = line.match(/^\s*\**\s*confidence\s*\**\s*:\s*\**\s*(high|medium|low)\**\s*(.*)$/i);
-    if (c) { confidence = c[1].toLowerCase(); sections.confidenceWhy = c[2].trim(); continue; }
+    if (c) { confidence = c[1].toLowerCase(); sections.confidenceWhy = c[2].replace(/^[\s\u2014\u2013:.-]+/, '').trim(); continue; }
     const ph = line.match(/^\s*\**\s*photo\s*\**\s*:\s*\**\s*(\S+)/i);
     if (ph) { photo = /^https:\/\/\S+\.(?:jpe?g|png|webp|gif)(?:\?\S*)?$/i.test(ph[1]) ? ph[1] : ''; continue; }
     sections[current].push(line);
@@ -110,7 +119,7 @@ export async function researchPerson({ apiKey, model = MODEL_RESEARCH, person, e
   const fake = mock();
   let out;
   if (fake?.research) {
-    out = fake.research(payload);
+    out = await fake.research(payload);
   } else {
     out = await callClaudeWithSearch({
       apiKey, model,

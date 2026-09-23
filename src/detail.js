@@ -1,18 +1,16 @@
 // The side panel: the full picture of one person or one employer.
 //
 // Click a person node, an employer hub, a result row or a colleague and this
-// opens on the right with everything the browser knows: the classification,
-// every matched domain, the employer's labelled facts, who else is there, and
-// — when a key is saved and the switch is on — Claude's read of the headline.
+// opens on the right with everything the browser knows: role, fields, the
+// employer's labelled facts, who else is there — and, on request, an enriched
+// profile Claude writes from the public web.
 //
-// Two rules. Everything shown is labelled with where it came from, because a
-// reader has to be able to tell a fact in the export from an inference. And
-// the panel never sends anything itself: the per-person read goes through
-// personllm.js, which is the one documented place that text leaves the page.
+// The panel never sends anything itself. Enrichment goes through research.js,
+// the one documented place a person's details leave the page, and only when
+// the user presses the button.
 
 import { $, esc, fmt } from './dom.js';
 import { normKey } from './enrich.js';
-import { readPerson } from './personllm.js';
 import { researchPerson, researchKey, parseBrief, RESEARCH_HEADINGS } from './research.js';
 import { getResearch } from './store.js';
 import { SEN_ORDER } from './taxonomy.js';
@@ -20,7 +18,7 @@ import { SEN_ORDER } from './taxonomy.js';
 const MAX_COLLEAGUES = 8;
 const MAX_STAFF = 40;
 
-export function createDetail({ world, D, people, ui, getEmployers, getKey, autoPerson, enrichOne }) {
+export function createDetail({ world, D, people, ui, getEmployers, getKey, enrichOne }) {
   const panel = $('detail');
   const body = $('detailBody');
   const kindEl = $('detailKind');
@@ -127,27 +125,41 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
     current = { kind: 'person', p };
     kindEl.textContent = 'Person';
 
+    const di = D.doms.indexOf(p.domain);
     const others = (p.domains || []).filter(d => d !== p.domain);
     const colleagues = p.company
       ? people.filter(q => q.company === p.company && q.i !== p.i).sort((a, b) => rank(a) - rank(b))
       : [];
-    const sameDomain = D.domCounts[D.doms.indexOf(p.domain)] || 0;
+    const sameDomain = D.domCounts[di] || 0;
+    const tag = (text, colour, title = '') =>
+      `<span class="d-tag"${title ? ` title="${esc(title)}"` : ''}>` +
+      (colour ? `<span class="dot" style="background:${colour}"></span>` : '') + `${esc(text)}</span>`;
 
     body.innerHTML =
-      `<div class="d-photo-wrap" id="dPhotoWrap"><h2 class="d-name">${esc(p.name)}</h2></div>` +
-      (p.role ? `<div class="d-role">${esc(p.role)}</div>` : '') +
-      (p.company
-        ? `<button type="button" class="linky d-co" data-co="${esc(p.company).replace(/"/g, '&quot;')}">${esc(p.company)}</button>`
-        : '') +
-      `<div class="d-meta">${esc(p.seniority)} · ${esc(p.domain)}` +
-      (sameDomain ? ` <span class="d-dim">· one of ${fmt(sameDomain)}</span>` : '') + `</div>` +
-      chips(others) +
-      (p.slug
-        ? `<a class="d-go" href="https://www.linkedin.com/in/${encodeURIComponent(p.slug)}/" target="_blank" rel="noopener">Open profile ↗</a>`
-        : `<span class="d-note">No profile link in the export.</span>`) +
+      // who they are, at a glance
+      `<div class="d-hero">` +
+        `<div class="d-photo-wrap" id="dPhotoWrap"><div class="d-hero-text">` +
+          `<h2 class="d-name">${esc(p.name)}</h2>` +
+          (p.role ? `<div class="d-role">${esc(p.role)}</div>` : '') +
+          (p.company
+            ? `<button type="button" class="linky d-co" data-co="${esc(p.company).replace(/"/g, '&quot;')}">${esc(p.company)}</button>`
+            : '') +
+        `</div></div>` +
+        `<div class="d-tags">` +
+          tag(p.domain, di >= 0 ? world.domColor[di] : '', sameDomain ? `${fmt(sameDomain)} people in this field` : '') +
+          (p.seniority && p.seniority !== 'Unstated' ? tag(p.seniority) : '') +
+          others.map(d => tag(d, world.domColor[D.doms.indexOf(d)] || '', 'Also matches')).join('') +
+        `</div>` +
+        (p.slug
+          ? `<a class="d-linkedin" href="https://www.linkedin.com/in/${encodeURIComponent(p.slug)}/" target="_blank" rel="noopener">View on LinkedIn ↗</a>`
+          : '') +
+      `</div>` +
+
+      // the enrich card sits right under the header, where it is seen
+      `<div class="d-enrich" id="dResearch"></div>` +
 
       (p.headline && p.headline !== p.role
-        ? sec('Headline · from the export', `<span class="d-text">${esc(p.headline)}</span>`)
+        ? sec('Headline', `<span class="d-text">${esc(p.headline)}</span>`)
         : '') +
 
       employerBlock(p.company) +
@@ -160,46 +172,50 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
               : ''))
         : '') +
 
-      sec("Claude's read · from the headline", `<div id="dRead"></div>`) +
-      sec('Enriched profile · from the public web', `<div id="dResearch"></div>`) +
-
-      (p.connectedOn ? sec('Connected', `<span class="d-text">${esc(dateOf(p.connectedOn))}</span>`) : '');
+      (p.connectedOn ? sec('Connected since', `<span class="d-text">${esc(dateOf(p.connectedOn))}</span>`) : '');
 
     wireCompanyLinks();
     wirePersonRows();
     wireLabelButtons();
     open();
     body.scrollTop = 0;
-    claudeRead(p, $('dRead'));
     researchBlock(p, $('dResearch'));
   }
 
-  /* ---------- research on the web ---------- */
+  /* ---------- enrich profile ---------- */
   /* Never automatic. This is the one action that sends a person's name
-     anywhere, so it is a button that says what it sends and what it costs. A
-     brief already in the cache is shown straight away, since that costs
-     nothing. */
+     anywhere, so it is a button that says plainly what you get, what is sent
+     and what it costs. A brief already saved is shown straight away. */
+
+  const SPARK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9z"/><path d="M19 15l.9 2.6 2.6.9-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9z" opacity=".7"/></svg>`;
 
   async function researchBlock(p, el) {
     if (!el) return;
-    // Draw the button straight away; swap in a cached brief if one turns up.
-    // Never hold the button back waiting on the database.
-    drawResearchButton(p, el);
+    // Draw the card straight away; swap in a saved brief if one turns up.
+    drawEnrichCard(p, el);
     const cached = await getResearch(researchKey(p)).catch(() => null);
     if (current?.p !== p || !el.isConnected) return;   // the panel moved on
     if (cached && !el.dataset.busy) renderBrief(p, el, { ...cached, cached: true });
   }
 
-  function drawResearchButton(p, el) {
+  function drawEnrichCard(p, el) {
+    el.className = 'd-enrich';
     if (!getKey?.()) {
-      el.innerHTML = `<span class="d-note"><button type="button" class="linky open-settings">Add a key</button> to research this person on the public web.</span>`;
+      el.innerHTML =
+        `<div class="de-head">${SPARK}<span>Enrich this profile</span></div>` +
+        `<p class="de-lead">Get a short brief on who ${esc(firstName(p))} is, what they work on and how to open a conversation, written by Claude from the public web.</p>` +
+        `<button type="button" class="primary de-btn open-settings">Add your API key to start</button>`;
       return;
     }
     el.innerHTML =
-      `<button type="button" class="primary d-research">Enrich profile</button>` +
-      `<span class="d-note">Sends this person’s name, headline and employer to Claude, which searches the public web for their background and a public photo. About $0.10–$0.30. Cached afterwards.</span>`;
+      `<div class="de-head">${SPARK}<span>Enrich this profile</span></div>` +
+      `<p class="de-lead">Get a short brief on who ${esc(firstName(p))} is, what they work on and how to open a conversation, with a photo if one is public.</p>` +
+      `<button type="button" class="primary de-btn d-research">Enrich profile</button>` +
+      `<p class="de-fine">Claude searches the public web using their name, headline and employer. About $0.10–$0.30, saved afterwards.</p>`;
     el.querySelector('.d-research').addEventListener('click', () => fetchResearch(p, el, false));
   }
+
+  const firstName = p => (p.name || '').split(/\s+/)[0] || 'this person';
 
   async function fetchResearch(p, el, force) {
     const key = getKey?.();
@@ -208,19 +224,41 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
     const controller = new AbortController();
     researching = controller;
     el.dataset.busy = '1';
-    el.innerHTML = status('researching… this can take a minute or two');
+    el.className = 'd-enrich busy';
+
+    const started = Date.now();
+    el.innerHTML =
+      `<div class="de-head">${SPARK}<span>Enriching profile…</span><span class="de-clock" id="deClock">0:00</span></div>` +
+      `<div class="de-track"><span></span></div>` +
+      `<p class="de-fine">Searching the public web and writing the brief. Usually under two minutes. You can keep exploring; it will appear here.</p>` +
+      `<button type="button" class="linky de-cancel">Cancel</button>`;
+    const clock = setInterval(() => {
+      const t = Math.floor((Date.now() - started) / 1000);
+      const c = el.querySelector('#deClock');
+      if (c) c.textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+    }, 1000);
+    el.querySelector('.de-cancel').addEventListener('click', () => {
+      controller.abort();
+      drawEnrichCard(p, el);
+    });
+
     try {
       const r = await researchPerson({
         apiKey: key, person: p, employer: employerOf(p.company), signal: controller.signal, force
       });
       if (controller.signal.aborted) return;
       renderBrief(p, el, r);
+      ui.say(`${p.name} · profile enriched`);
     } catch (err) {
       if (controller.signal.aborted) return;
-      el.innerHTML = status(err?.message || 'The research did not complete.', true) +
-        `<button type="button" class="linky d-again">Try again</button>`;
+      el.className = 'd-enrich failed';
+      el.innerHTML =
+        `<div class="de-head">${SPARK}<span>Couldn’t enrich this profile</span></div>` +
+        `<p class="de-lead">${esc(err?.message || 'The search did not complete.')}</p>` +
+        `<button type="button" class="primary de-btn d-again">Try again</button>`;
       el.querySelector('.d-again')?.addEventListener('click', () => fetchResearch(p, el, true));
     } finally {
+      clearInterval(clock);
       if (researching === controller) researching = null;
       delete el.dataset.busy;
     }
@@ -244,35 +282,53 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
     wrap.prepend(img);
   }
 
+  // Plain-language headings, in the order a reader wants them: who, how to
+  // open, then the detail.
+  const BRIEF_ORDER = [
+    ['Identity', 'Who they are'],
+    ['Approach', 'Conversation starters'],
+    ['Role', 'What they do'],
+    ['Organisation', 'Their organisation'],
+    ['Track record', 'Background'],
+    ['Signals', 'What they’re focused on']
+  ];
+
   function renderBrief(p, el, r) {
     const { sections } = parseBrief(r.text);
     if (r.photo) showPhoto(r.photo);
-    const parts = [];
-    if (sections.preamble) parts.push(`<p class="d-brief-pre">${briefText(sections.preamble)}</p>`);
-    for (const h of RESEARCH_HEADINGS) {
-      if (!sections[h]) continue;
-      parts.push(`<div class="d-brief-sec"><span class="d-sub">${esc(h)}</span><p class="d-text">${briefText(sections[h])}</p></div>`);
-    }
     const conf = r.confidence || 'low';
+    const confLabel = { high: 'High confidence', medium: 'Medium confidence', low: 'Low confidence' }[conf] || 'Unrated';
+
+    const parts = [];
     parts.push(
-      `<div class="d-conf d-conf-${conf}">Confidence ${esc(conf)}` +
-      (sections.confidenceWhy ? ` · <span>${esc(sections.confidenceWhy)}</span>` : '') + `</div>`);
+      `<div class="de-head">${SPARK}<span>Enriched profile</span>` +
+      `<span class="de-conf de-conf-${conf}" title="${esc(sections.confidenceWhy || '')}">${confLabel}</span></div>`);
+    if (sections.preamble) parts.push(`<p class="de-warn">${briefText(sections.preamble)}</p>`);
+    for (const [key, label] of BRIEF_ORDER) {
+      if (!sections[key]) continue;
+      parts.push(
+        `<div class="de-sec${key === 'Approach' ? ' de-approach' : ''}">` +
+        `<span class="de-h">${esc(label)}</span><p>${briefText(sections[key])}</p></div>`);
+    }
+    if (sections.confidenceWhy) parts.push(`<p class="de-fine">${esc(sections.confidenceWhy)}</p>`);
     if (r.sources?.length) {
-      parts.push(`<span class="d-sub">Sources</span><ol class="d-sources">` +
+      parts.push(`<details class="de-sources"><summary>${r.sources.length} source${r.sources.length === 1 ? '' : 's'}</summary><ol>` +
         r.sources.map(src => {
           let host = '';
           try { host = new URL(src.url).hostname.replace(/^www\./, ''); } catch { /* keep blank */ }
           return `<li><a href="${esc(src.url).replace(/"/g, '&quot;')}" target="_blank" rel="noopener">${esc(src.title)}</a>` +
             (host ? ` <span class="d-dim">${esc(host)}</span>` : '') + `</li>`;
-        }).join('') + `</ol>`);
+        }).join('') + `</ol></details>`);
     }
     if (r.searchErrors?.length) {
-      parts.push(`<span class="d-note">Some searches did not run (${esc(r.searchErrors.join(', '))}); the brief may be thinner than usual.</span>`);
+      parts.push(`<p class="de-fine">Some searches did not run, so this may be thinner than usual.</p>`);
     }
     parts.push(
-      `<span class="d-note">Researched ${esc(dateOf(r.researchedAt))} · ${r.searches || 0} searches · ` +
-      (r.cached ? 'from an earlier run, no cost' : `$${(r.cost || 0).toFixed(2)}`) +
-      ` · <button type="button" class="linky d-again">Enrich again</button></span>`);
+      `<p class="de-fine">Enriched ${esc(dateOf(r.researchedAt))} · ` +
+      (r.cached ? 'saved, no cost' : `$${(r.cost || 0).toFixed(2)}`) +
+      ` · <button type="button" class="linky d-again">Refresh</button></p>`);
+
+    el.className = 'd-enrich done';
     el.innerHTML = parts.join('');
     el.querySelector('.d-again')?.addEventListener('click', () => fetchResearch(p, el, true));
   }
@@ -283,39 +339,6 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
     }
   }
 
-  async function claudeRead(p, el) {
-    if (!el) return;
-    const key = getKey?.();
-    if (!key) { el.innerHTML = `<span class="d-note"><button type="button" class="linky open-settings">Add a key</button> to get Claude’s read of this headline.</span>`; return; }
-    if (!autoPerson?.()) {
-      el.innerHTML = `<button type="button" class="linky" id="dAsk">Ask Claude about this person</button> ` +
-        `<span class="d-note">Sends the role, headline and employer name. Not the name, link or email.</span>`;
-      $('dAsk')?.addEventListener('click', () => { el.innerHTML = ''; fetchRead(p, el, key); });
-      return;
-    }
-    fetchRead(p, el, key);
-  }
-
-  async function fetchRead(p, el, key) {
-    const controller = new AbortController();
-    inFlight = controller;
-    el.innerHTML = status('asking claude…');
-    try {
-      const r = await readPerson({ apiKey: key, person: p, employer: employerOf(p.company), signal: controller.signal });
-      if (controller.signal.aborted) return;
-      el.innerHTML =
-        `<span class="d-text">${esc(r.summary)}</span>` +
-        (r.likelyWorksOn.length ? `<span class="d-sub">Likely works on</span>${chips(r.likelyWorksOn)}` : '') +
-        (r.couldHelpWith.length ? `<span class="d-sub">Could help with</span>${chips(r.couldHelpWith)}` : '') +
-        `<span class="d-note">Reads as ${esc(r.seniorityRead)} · confidence ${esc(r.confidence)} · ` +
-        (r.cached ? 'from an earlier read, no cost' : `$${r.cost.toFixed(4)}`) + `</span>`;
-    } catch (err) {
-      if (controller.signal.aborted) return;
-      el.innerHTML = status(err?.message || 'Claude could not read this one.', true);
-    } finally {
-      if (inFlight === controller) inFlight = null;
-    }
-  }
 
   /* ---------- a company ---------- */
 

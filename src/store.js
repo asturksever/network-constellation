@@ -16,7 +16,6 @@ const CURRENT = 'current';
 
 export const KEY_STORAGE = 'nc.apiKey';
 export const MODEL_STORAGE = 'nc.model';
-export const AUTO_PERSON_STORAGE = 'nc.autoPerson';
 
 let dbPromise = null;
 
@@ -194,7 +193,7 @@ export async function forgetAll() {
   try {
     localStorage.removeItem(KEY_STORAGE);
     localStorage.removeItem(MODEL_STORAGE);
-    localStorage.removeItem(AUTO_PERSON_STORAGE);
+    localStorage.removeItem('nc.autoPerson');   // from an earlier version
   } catch { /* storage off */ }
   if (dbPromise) {
     try { (await dbPromise).close(); } catch { /* already closed */ }

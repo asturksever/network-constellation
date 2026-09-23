@@ -5,7 +5,7 @@
 // and sends anything anywhere.
 
 import { $, fmt } from './dom.js';
-import { prefs, KEY_STORAGE, MODEL_STORAGE, AUTO_PERSON_STORAGE, allEmployers } from './store.js';
+import { prefs, KEY_STORAGE, MODEL_STORAGE, allEmployers } from './store.js';
 import { employerList, estimate, enrichEmployers, enrichOne, normKey } from './enrich.js';
 import { LlmError, MODEL_EMPLOYERS } from './llm.js';
 
@@ -52,11 +52,6 @@ export async function wireEnrich({ D, people, onEmployers, say }) {
   if (saved) { keyEl.value = saved; rememberEl.checked = true; }
   markKey();
 
-  // Whether clicking a person asks Claude about them. On by default; the
-  // choice is remembered so switching it off sticks.
-  const autoEl = $('autoPerson');
-  autoEl.checked = prefs.get(AUTO_PERSON_STORAGE) !== '0';
-  autoEl.addEventListener('change', () => prefs.set(AUTO_PERSON_STORAGE, autoEl.checked ? '1' : '0'));
 
   onEmployers?.(employers);
 
@@ -167,7 +162,6 @@ export async function wireEnrich({ D, people, onEmployers, say }) {
     get employers() { return employers; },
     get key() { return keyEl.value.trim(); },
     hasKey: () => Boolean(keyEl.value.trim()),
-    autoPerson: () => autoEl.checked,
     openSettings: openSheet,
     enrichOne: enrichEmployer,
     normKey
