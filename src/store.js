@@ -23,11 +23,23 @@ let dbPromise = null;
 /** Set when the database could not be opened, so the UI can say why nothing persists. */
 export const storeProblem = { message: null };
 
+/**
+ * Open whatever version exists, without asking for an upgrade. An upgrade
+ * needs every other tab to let go of the database; asking for one up front
+ * meant a stale tab could block every read in a new tab. So reads work at any
+ * version, and the upgrade is requested only when a store is missing.
+ */
 function open() {
   if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
+  dbPromise = openAt(undefined);
+  dbPromise.catch(() => { dbPromise = null; });
+  return dbPromise;
+}
+
+function openAt(version) {
+  return new Promise((resolve, reject) => {
     if (!('indexedDB' in window)) { reject(new Error('This browser has no IndexedDB.')); return; }
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    const req = version ? indexedDB.open(DB_NAME, version) : indexedDB.open(DB_NAME);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(GRAPH)) db.createObjectStore(GRAPH);
@@ -35,10 +47,8 @@ function open() {
       if (!db.objectStoreNames.contains(PERSONS)) db.createObjectStore(PERSONS, { keyPath: 'key' });
       if (!db.objectStoreNames.contains(RESEARCH)) db.createObjectStore(RESEARCH, { keyPath: 'key' });
     };
-    // A version upgrade waits for every other tab to let go of the database.
-    // Without this, an old tab pins it open and a new tab's open() never
-    // settles — the page sits on "Loading…" for ever. So: release on request,
-    // and never wait more than a few seconds for the other side to do the same.
+    // An upgrade waits for every other tab to release the database. Never
+    // wait more than a few seconds for that; say which tab to close instead.
     const watchdog = setTimeout(() => {
       storeProblem.message = 'Another tab of this page is holding the browser database. Close it and reload to keep your data and Claude’s reads.';
       reject(new Error(storeProblem.message));
@@ -47,14 +57,21 @@ function open() {
       clearTimeout(watchdog);
       storeProblem.message = null;
       const db = req.result;
-      db.onversionchange = () => { db.close(); dbPromise = null; };
+      // let a newer tab upgrade: close, and reopen lazily next time
+      db.onversionchange = () => { db.close(); if (dbPromise) dbPromise = null; };
       resolve(db);
     };
     req.onerror = () => { clearTimeout(watchdog); reject(req.error); };
     req.onblocked = () => { clearTimeout(watchdog); reject(new Error('Another tab is holding the database open.')); };
   });
-  // A failed open must not be remembered, or one transient error poisons every
-  // later read and write for the life of the page.
+}
+
+/** The database with `store` present, upgrading only if it is missing. */
+async function withStore(store) {
+  let db = await open();
+  if (db.objectStoreNames.contains(store)) return db;
+  db.close();
+  dbPromise = openAt(Math.max(DB_VERSION, db.version + 1));
   dbPromise.catch(() => { dbPromise = null; });
   return dbPromise;
 }
@@ -65,7 +82,7 @@ function open() {
  * transaction commits — which is exactly what an upload-then-reload does.
  */
 function tx(store, mode, fn) {
-  return open().then(db => new Promise((resolve, reject) => {
+  return withStore(store).then(db => new Promise((resolve, reject) => {
     const t = db.transaction(store, mode);
     let result;
     t.oncomplete = () => resolve(result);
