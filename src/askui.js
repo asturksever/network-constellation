@@ -202,6 +202,9 @@ export function wireAsk({ world, D, people, ui }) {
     const node = nodeFor(p);
     if (!node) return;
     landed = true;
+    // Stepping through the list while a profile is open closes the profile,
+    // which brings the answer back into view; a click opens the next one.
+    if (auto) api.detail?.close?.();
     ui.land(node, { index: at, total: results.length, auto });
     mark();
   }

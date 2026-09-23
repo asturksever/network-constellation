@@ -184,7 +184,7 @@ slug or email, and the payload is built from an explicit object rather than the
 person record so it cannot drift.
 
 `research.js` is the fourth pass and the only one that sends a person's name:
-it runs solely from the **Research on the web** button on a person's panel,
+it runs solely from the **Enrich profile** button on a person's panel,
 declares Claude's `web_search` tool, reads a many-block response (text blocks
 joined, `web_search_result_location` citations collected, a paused turn resumed
 by sending the assistant content back unchanged), and caches by a hash that

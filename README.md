@@ -80,9 +80,9 @@ organisation is headquartered and what kind of organisation it is.
 **Four things can be sent to Anthropic, and nothing else.** Employer names,
 and the text of the questions you ask. With "Ask Claude about each person I
 click" switched on, the role and headline of a person you click. And only when
-you press **Research on the web** on a person's panel, that person's name,
+you press **Enrich profile** on a person's panel, that person's name,
 headline and employer, so Claude can search the public web and write a sourced
-brief. That button is the one thing here that ever sends a name, it never runs
+brief and, if a public page carries one, a photo. That button is the one thing here that ever sends a name, it never runs
 on its own, and it says so beside the button. Never emails or profile links.
 Everything is cached in your browser, so a person costs once. Use a key with a
 spend limit.
@@ -180,7 +180,7 @@ Two things do reach the network, and only if you ask for them:
 - **Enrichment** sends employer names and your question text to Anthropic, with
   your own API key. If you opt into automatic person reads, it also sends that
   person's role, headline, employer name and already-known employer facts.
-  **Research on the web**, a button on a person's panel, sends their name too,
+  **Enrich profile**, a button on a person's panel, sends their name too,
   and Claude then searches the public web. It never runs without a click.
   Never people's names, emails or profile links.
 - **`npm run logos`** sends employer-derived domain guesses to unavatar.io,

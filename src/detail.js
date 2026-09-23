@@ -134,7 +134,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
     const sameDomain = D.domCounts[D.doms.indexOf(p.domain)] || 0;
 
     body.innerHTML =
-      `<h2 class="d-name">${esc(p.name)}</h2>` +
+      `<div class="d-photo-wrap" id="dPhotoWrap"><h2 class="d-name">${esc(p.name)}</h2></div>` +
       (p.role ? `<div class="d-role">${esc(p.role)}</div>` : '') +
       (p.company
         ? `<button type="button" class="linky d-co" data-co="${esc(p.company).replace(/"/g, '&quot;')}">${esc(p.company)}</button>`
@@ -161,7 +161,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
         : '') +
 
       sec("Claude's read · from the headline", `<div id="dRead"></div>`) +
-      sec('On the web', `<div id="dResearch"></div>`) +
+      sec('Enriched profile · from the public web', `<div id="dResearch"></div>`) +
 
       (p.connectedOn ? sec('Connected', `<span class="d-text">${esc(dateOf(p.connectedOn))}</span>`) : '');
 
@@ -182,16 +182,22 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
 
   async function researchBlock(p, el) {
     if (!el) return;
-    const cached = await getResearch(researchKey(p));
-    if (current?.p !== p) return;            // the panel moved on while we looked
-    if (cached) { renderBrief(p, el, { ...cached, cached: true }); return; }
+    // Draw the button straight away; swap in a cached brief if one turns up.
+    // Never hold the button back waiting on the database.
+    drawResearchButton(p, el);
+    const cached = await getResearch(researchKey(p)).catch(() => null);
+    if (current?.p !== p || !el.isConnected) return;   // the panel moved on
+    if (cached && !el.dataset.busy) renderBrief(p, el, { ...cached, cached: true });
+  }
+
+  function drawResearchButton(p, el) {
     if (!getKey?.()) {
       el.innerHTML = `<span class="d-note"><button type="button" class="linky open-settings">Add a key</button> to research this person on the public web.</span>`;
       return;
     }
     el.innerHTML =
-      `<button type="button" class="primary d-research">Research on the web</button>` +
-      `<span class="d-note">Sends this person’s name, headline and employer to Claude, which searches the public web. About $0.10–$0.30. Cached afterwards.</span>`;
+      `<button type="button" class="primary d-research">Enrich profile</button>` +
+      `<span class="d-note">Sends this person’s name, headline and employer to Claude, which searches the public web for their background and a public photo. About $0.10–$0.30. Cached afterwards.</span>`;
     el.querySelector('.d-research').addEventListener('click', () => fetchResearch(p, el, false));
   }
 
@@ -201,6 +207,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
     researching?.abort();
     const controller = new AbortController();
     researching = controller;
+    el.dataset.busy = '1';
     el.innerHTML = status('researching… this can take a minute or two');
     try {
       const r = await researchPerson({
@@ -215,6 +222,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
       el.querySelector('.d-again')?.addEventListener('click', () => fetchResearch(p, el, true));
     } finally {
       if (researching === controller) researching = null;
+      delete el.dataset.busy;
     }
   }
 
@@ -223,8 +231,22 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
     .replace(/\n{2,}/g, '</p><p>')
     .replace(/\n/g, '<br>');
 
+  /** A public photo found by the research, ahead of the name. Removed if it fails to load. */
+  function showPhoto(url) {
+    const wrap = $('dPhotoWrap');
+    if (!wrap || !url || wrap.querySelector('.d-photo')) return;
+    const img = document.createElement('img');
+    img.className = 'd-photo';
+    img.alt = '';
+    img.referrerPolicy = 'no-referrer';
+    img.addEventListener('error', () => img.remove());
+    img.src = url;
+    wrap.prepend(img);
+  }
+
   function renderBrief(p, el, r) {
     const { sections } = parseBrief(r.text);
+    if (r.photo) showPhoto(r.photo);
     const parts = [];
     if (sections.preamble) parts.push(`<p class="d-brief-pre">${briefText(sections.preamble)}</p>`);
     for (const h of RESEARCH_HEADINGS) {
@@ -250,7 +272,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
     parts.push(
       `<span class="d-note">Researched ${esc(dateOf(r.researchedAt))} · ${r.searches || 0} searches · ` +
       (r.cached ? 'from an earlier run, no cost' : `$${(r.cost || 0).toFixed(2)}`) +
-      ` · <button type="button" class="linky d-again">Research again</button></span>`);
+      ` · <button type="button" class="linky d-again">Enrich again</button></span>`);
     el.innerHTML = parts.join('');
     el.querySelector('.d-again')?.addEventListener('click', () => fetchResearch(p, el, true));
   }
@@ -266,7 +288,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, autoP
     const key = getKey?.();
     if (!key) { el.innerHTML = `<span class="d-note"><button type="button" class="linky open-settings">Add a key</button> to get Claude’s read of this headline.</span>`; return; }
     if (!autoPerson?.()) {
-      el.innerHTML = `<button type="button" class="linky" id="dAsk">Ask Claude about this person</button>` +
+      el.innerHTML = `<button type="button" class="linky" id="dAsk">Ask Claude about this person</button> ` +
         `<span class="d-note">Sends the role, headline and employer name. Not the name, link or email.</span>`;
       $('dAsk')?.addEventListener('click', () => { el.innerHTML = ''; fetchRead(p, el, key); });
       return;

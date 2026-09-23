@@ -33,6 +33,7 @@ test('the prompt asks for exactly the six headings the renderer splits on', () =
   assert.match(RESEARCH_SYSTEM, /Confidence: high \| medium \| low/);
   assert.match(RESEARCH_SYSTEM, /namesake/, 'identity check is the first step');
   assert.match(RESEARCH_SYSTEM, /private life/, 'private-life exclusion is stated');
+  assert.match(RESEARCH_SYSTEM, /Photo: <direct image URL>/, 'the photo line is asked for');
 });
 
 test('parseBrief splits a brief into sections and reads the confidence line', () => {
@@ -44,9 +45,14 @@ test('parseBrief splits a brief into sections and reads the confidence line', ()
     'Track record', 'Spoke at a conference.',
     '**Signals**', 'Posts about SAR.',
     '**Approach**', '1. Ask about SAR.',
-    'Confidence: medium — the employer matched but no photo did.'
+    'Confidence: medium — the employer matched but no photo did.',
+    'Photo: https://example.com/team/marta.jpg'
   ].join('\n');
-  const { sections, confidence } = parseBrief(text);
+  const { sections, confidence, photo } = parseBrief(text);
+  assert.equal(photo, 'https://example.com/team/marta.jpg');
+  assert.equal(parseBrief('**Identity**\nx\nPhoto: none').photo, '');
+  assert.equal(parseBrief('Photo: http://insecure.example.com/a.jpg').photo, '', 'only https images');
+  assert.equal(parseBrief('Photo: https://example.com/page.html').photo, '', 'only direct image urls');
   assert.equal(confidence, 'medium');
   assert.match(sections.preamble, /could not fully confirm/);
   assert.match(sections.Identity, /Probably/);

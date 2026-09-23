@@ -959,8 +959,10 @@ body.detailing #meta { display: none; }
 body.detailing #note { display: none; }
 /* A detail needs the full column unless it is sharing that column with an
    active answer. */
-body.detailing.answering #detail { max-height: calc(58vh - 18px); }
-body.detailing.answering #answer { top: auto; bottom: 18px; max-height: calc(42vh - 18px); }
+/* A profile takes the answer's place: one thing on the right at a time. The
+   answer is hidden, not cleared, so closing the profile brings it straight
+   back — and the lit set in the scene stays lit throughout. */
+body.detailing #answer { display: none; }
 
 .d-head { display: flex; align-items: center; justify-content: space-between; }
 .d-head .lab { margin: 0; }
@@ -1165,3 +1167,15 @@ body.sheet-up { overflow: hidden; }
   button:active, .ares:active, .drow:active, .icon-btn:active, .linky:active { transform: none; }
   .seg button { transition: none; }
 }
+
+/* ---------- profile photo ---------- */
+.d-photo-wrap { display: flex; align-items: center; gap: 12px; }
+.d-photo {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: none;
+  background: var(--fill);
+  box-shadow: 0 0 0 1px var(--hair), 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.d-photo-wrap .d-name { margin: 0; }

@@ -29,8 +29,14 @@ export const storeProblem = { message: null };
  * meant a stale tab could block every read in a new tab. So reads work at any
  * version, and the upgrade is requested only when a store is missing.
  */
+// Once an open has timed out behind another tab, fail fast for a while
+// instead of making every read sit through the same four-second wait.
+let blockedUntil = 0;
+const BLOCK_BACKOFF = 30_000;
+
 function open() {
   if (dbPromise) return dbPromise;
+  if (Date.now() < blockedUntil) return Promise.reject(new Error(storeProblem.message || 'Database unavailable.'));
   dbPromise = openAt(undefined);
   dbPromise.catch(() => { dbPromise = null; });
   return dbPromise;
@@ -51,11 +57,13 @@ function openAt(version) {
     // wait more than a few seconds for that; say which tab to close instead.
     const watchdog = setTimeout(() => {
       storeProblem.message = 'Another tab of this page is holding the browser database. Close it and reload to keep your data and Claude’s reads.';
+      blockedUntil = Date.now() + BLOCK_BACKOFF;
       reject(new Error(storeProblem.message));
     }, 4000);
     req.onsuccess = () => {
       clearTimeout(watchdog);
       storeProblem.message = null;
+      blockedUntil = 0;
       const db = req.result;
       // let a newer tab upgrade: close, and reopen lazily next time
       db.onversionchange = () => { db.close(); if (dbPromise) dbPromise = null; };

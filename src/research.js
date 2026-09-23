@@ -41,8 +41,9 @@ export const RESEARCH_SYSTEM = `You are researching one professional contact on 
 4. **Track record.** Prior roles and employers, education if public, and what they have made public: talks, papers, articles, open-source work, interviews, podcasts. Prefer the last three years.
 5. **Signals.** What they seem to care about professionally right now: recent posts or talks, topics they return to, communities they are part of.
 6. **Approach.** Three specific things the reader could open a conversation with, each grounded in something found above. Not compliments.
+7. **Photo.** If a page that is clearly about this person carries a professional photo of them — a company team page, a conference speaker page, a personal site, a university staff page — give the direct image URL. Only a URL that ends in an image, only from a public page that needs no login, and only when you are confident it is this person. Otherwise say none.
 
-Rules. Cite a source for every factual claim; anything uncited is an inference and must say so. Report nothing from private life: no home address, personal contact details, family, health, religion, politics. Do not pad; a section with nothing solid is one line saying so. Plain, direct English. Use exactly these headings, each on its own line: **Identity**, **Organisation**, **Role**, **Track record**, **Signals**, **Approach**, then a final line \`Confidence: high | medium | low\` and one sentence on why.`;
+Rules. Cite a source for every factual claim; anything uncited is an inference and must say so. Report nothing from private life: no home address, personal contact details, family, health, religion, politics. Do not pad; a section with nothing solid is one line saying so. Plain, direct English. Use exactly these headings, each on its own line: **Identity**, **Organisation**, **Role**, **Track record**, **Signals**, **Approach**, then a line \`Confidence: high | medium | low\` and one sentence on why, and a last line \`Photo: <direct image URL>\` or \`Photo: none\`.`;
 
 function userText(payload) {
   const lines = [
@@ -72,6 +73,7 @@ export function parseBrief(text) {
   let current = 'preamble';
   sections[current] = [];
   let confidence = '';
+  let photo = '';
   const headingRe = new RegExp(`^\\s*(?:#+\\s*)?\\**\\s*(${RESEARCH_HEADINGS.join('|')})\\s*\\**\\s*:?\\s*$`, 'i');
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trimEnd();
@@ -83,12 +85,14 @@ export function parseBrief(text) {
     }
     const c = line.match(/^\s*\**\s*confidence\s*\**\s*:\s*\**\s*(high|medium|low)\**\s*(.*)$/i);
     if (c) { confidence = c[1].toLowerCase(); sections.confidenceWhy = c[2].trim(); continue; }
+    const ph = line.match(/^\s*\**\s*photo\s*\**\s*:\s*\**\s*(\S+)/i);
+    if (ph) { photo = /^https:\/\/\S+\.(?:jpe?g|png|webp|gif)(?:\?\S*)?$/i.test(ph[1]) ? ph[1] : ''; continue; }
     sections[current].push(line);
   }
   for (const k of Object.keys(sections)) {
     if (Array.isArray(sections[k])) sections[k] = sections[k].join('\n').trim();
   }
-  return { sections, confidence };
+  return { sections, confidence, photo };
 }
 
 /**
@@ -117,10 +121,11 @@ export async function researchPerson({ apiKey, model = MODEL_RESEARCH, person, e
     });
   }
 
-  const { confidence } = parseBrief(out.text);
+  const { confidence, photo } = parseBrief(out.text);
   const record = {
     key,
     text: out.text,
+    photo: photo || '',
     sources: out.sources || [],
     searchErrors: out.searchErrors || [],
     confidence: confidence || 'low',

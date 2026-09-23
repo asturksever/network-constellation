@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- Bounds where anything on this page can send data. The only origin it may
      talk to besides itself is Anthropic's API, and only once you paste a key. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <title>Network Constellation</title>
 <link rel="stylesheet" href="src/styles.css">
 </head>
@@ -61,7 +61,7 @@
       <p class="demo">No export to hand? <button type="button" class="linky" id="tryDemo">Open the demo</button> &mdash; 250 invented people, same machinery.</p>
     </div>
 
-    <p class="panel landing-privacy">Nothing is uploaded. Claude is optional, needs your own key, and only ever sees what Settings spells out &mdash; employer names and your questions by default, a name only when you press <strong>Research on the web</strong>. Never emails or profile links.</p>
+    <p class="panel landing-privacy">Nothing is uploaded. Claude is optional, needs your own key, and only ever sees what Settings spells out &mdash; employer names and your questions by default, a name only when you press <strong>Enrich profile</strong>. Never emails or profile links.</p>
   </div>
 </div>
 
@@ -178,7 +178,7 @@
       <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
       <label class="chk"><input type="checkbox" id="rememberKey"> Remember on this device</label>
       <label class="chk"><input type="checkbox" id="autoPerson" checked> Ask Claude about each person I click</label>
-      <p class="ehelp small">Sent to Anthropic: employer names, the text of your questions, and with the switch above on, the role and headline of a person you click. Only the <em>Research on the web</em> button on a person&rsquo;s panel ever sends a name, and only when you press it. Never emails or profile links. Every result is cached, so a person costs once. Use a key with a spend limit.</p>
+      <p class="ehelp small">Sent to Anthropic: employer names, the text of your questions, and with the switch above on, the role and headline of a person you click. Only the <em>Enrich profile</em> button on a person&rsquo;s panel ever sends a name, and only when you press it. Never emails or profile links. Every result is cached, so a person costs once. Use a key with a spend limit.</p>
       <span class="lab">Scope</span>
       <div class="seg" id="scopeSeg" role="group" aria-label="Enrichment scope">
         <button type="button" data-scope="hubs" aria-pressed="true">Hubs</button>
