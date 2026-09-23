@@ -24,7 +24,17 @@ export function wireUI(world, D, hit) {
     tip.style.top = y + 'px';
   });
 
+  // Whoever wants to know when a person or employer is clicked or landed on.
+  // The detail panel registers here; without it, a person click opens their
+  // profile as it always did.
+  const hooks = { node: null, landed: null };
+
   world.graph.onNodeClick(n => {
+    if ((n.t === 'p' || n.t === 'comp') && hooks.node) {
+      if (n.t === 'p') world.flyTo(n, 90);
+      hooks.node(n);
+      return;
+    }
     if (n.t === 'p' && n.slug) {
       window.open('https://www.linkedin.com/in/' + n.slug + '/', '_blank', 'noopener');
       return;
@@ -105,6 +115,7 @@ export function wireUI(world, D, hit) {
     say(n.name + (total > 1
       ? `  ·  ${index + 1} of ${total}, Enter for next`
       : '  ·  found'));
+    hooks.landed?.(n);
   }
 
   function clearHit() {
@@ -196,7 +207,7 @@ export function wireUI(world, D, hit) {
 
   addEventListener('resize', () => world.graph.width(innerWidth).height(innerHeight));
 
-  return { say, land, clearHit };
+  return { say, land, clearHit, setHooks: h => Object.assign(hooks, h) };
 }
 
 function row(color, label, count, di) {

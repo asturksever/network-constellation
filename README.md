@@ -14,9 +14,9 @@ and only one of them is useful when you need an introduction.
 - **See the shape of your network.** Domains fall out of a classifier, each its
   own cluster and its own generated hue. Employer hubs sit between them, sized
   by how many of your contacts work there.
-- **Find one person instantly.** Type a name: the node goes white-hot, its links
-  light up, the camera swoops in, and a marker locks on with their role and a
-  link to their profile. Enter steps through the rest.
+- **Open the full picture.** Click a person or an employer hub for their role,
+  headline, domains, colleagues, seniority mix and profile link. Employer
+  panels add headquarters, industry and organisation type when available.
 - **Ask it a question.** "Anyone in satellite imagery licensing?" resolves to a
   structured filter and runs over the whole set in milliseconds — no model, no
   API key, nothing sent anywhere. The query it ran is printed above the answer.
@@ -78,9 +78,11 @@ cannot be answered from the file alone. Paste an Anthropic API key into the
 **Enrich with Claude** panel and it will look up, for each employer, where the
 organisation is headquartered and what kind of organisation it is.
 
-**Exactly two things are sent to Anthropic:** employer names, and the text of
-the questions you ask. Never people's names, headlines, profile links or email
-addresses. Use a key with a spend limit.
+**Three things can be sent to Anthropic:** employer names; the text of the
+questions you ask; and, if you leave **Ask Claude about each person I click**
+on, that person's role, headline, employer name and already-known employer
+facts. Never a person's name, profile link or email address. Each person read
+is cached in this browser, so a person costs once. Use a key with a spend limit.
 
 Roughly $0.06 for the employer hubs of a 10,000-person network, or $0.70 for
 every employer in it. Results are kept in your browser, so you pay once.
@@ -116,7 +118,8 @@ by** to *Seniority* to repaint the scene by rank instead.
 
 **Controls.** Ask, name search, density (everyone / senior / hubs), colour by
 domain or seniority, isolate a domain, and toggles for employer links and logos.
-Hover for role and employer; click a person to open their profile.
+Hover for role and employer; click a person or employer hub to open its detail
+panel. The panel includes the profile link when the export provided one.
 
 ## What this is honest about
 
@@ -152,7 +155,9 @@ src/graph.js       node/link model, force-graph setup, camera
 src/highlight.js   the search-hit marker
 src/labels.js      domain labels projected from 3D
 src/logos.js       employer logos projected from 3D, sized by headcount
-src/store.js       IndexedDB: your graph and your enrichment, locally
+src/store.js       IndexedDB: your graph, employer facts and person reads, locally
+src/detail.js      side panel for people and employers
+src/personllm.js   optional Claude read of a clicked person's headline
 src/upload.js      the landing state and column mapper
 src/ui.js          control panel, tooltip, status line
 src/askui.js       the question box and its answer panel
@@ -169,7 +174,9 @@ IndexedDB. It is never uploaded. **Forget** in the control panel erases it.
 Two things do reach the network, and only if you ask for them:
 
 - **Enrichment** sends employer names and your question text to Anthropic, with
-  your own API key. Never people's names, emails or profile links.
+  your own API key. If you opt into automatic person reads, it also sends that
+  person's role, headline, employer name and already-known employer facts.
+  Never people's names, emails or profile links.
 - **`npm run logos`** sends employer-derived domain guesses to unavatar.io,
   DuckDuckGo and Google to fetch favicons. Company names, not people's. It is a
   local build step and entirely optional.

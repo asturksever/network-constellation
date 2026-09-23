@@ -42,10 +42,12 @@ src/askui.js          the question box and its answer panel
 src/enrichui.js       the bring-your-own-key panel and its progress
 src/upload.js         landing state, drop zone, column mapper
 src/build.js          rows -> graph payload; the one path Node and the browser share
-src/store.js          IndexedDB: the built graph and the employer records
+src/store.js          IndexedDB: the built graph, employer records and person reads
 src/llm.js            raw-fetch Anthropic client (see below for why not the SDK)
 src/enrich.js         employer names -> HQ and organisation type
 src/askllm.js         question -> extra filter constraints
+src/personllm.js      optional read of a clicked person's headline
+src/detail.js          side panel for people and employer hubs
 src/main.js           boot: find a graph -> build world -> wire UI
 scripts/build-data.mjs     CSV -> compact graph JSON (a thin wrapper over build.js)
 scripts/fetch-logos.mjs    employer name -> domain -> favicon -> logos/
@@ -169,13 +171,15 @@ bundler here, and the import stripper cannot flatten a default import. The day a
 third-party ESM package genuinely has to be imported from `src/`, replace the
 stripper with esbuild rather than teaching it new tricks.
 
-Two passes, both optional and both off without a key. `enrich.js` sends employer
+Three passes, all optional and all off without a key. `enrich.js` sends employer
 names in batches of 40 and gets back headquarters and organisation type.
 `askllm.js` sends the question text and gets back extra filter constraints,
 which are validated against the taxonomy before use and shown in the readout
-under "Claude added". Nothing else is ever sent — no person's name, headline,
-slug or email — and the payloads are assembled from strings rather than from
-people so they cannot drift.
+under "Claude added". `personllm.js` runs when the user clicks a person and has
+kept the automatic-read switch on: it sends role, headline, employer name and
+the employer facts already known locally. It never sends the person's name,
+slug or email, and the payload is built from an explicit object rather than the
+person record so it cannot drift.
 
 Location is a hard gate, so it excludes everyone whose employer could not be
 placed; the answer reports that count rather than swallowing it. Organisation

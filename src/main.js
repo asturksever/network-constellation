@@ -5,6 +5,7 @@ import { createLogos } from './logos.js';
 import { wireUI } from './ui.js';
 import { wireAsk } from './askui.js';
 import { wireEnrich } from './enrichui.js';
+import { createDetail } from './detail.js';
 import { createLanding } from './upload.js';
 import { peopleFromTuples, hydratePeople } from './build.js';
 import { loadGraph, forgetAll } from './store.js';
@@ -108,6 +109,20 @@ const boot = async () => {
   });
   ask.enrichment = enrichment;
 
+  // The side panel. It learns about clicks and landings through ui's hooks
+  // rather than by re-binding the graph's click handler.
+  const detail = createDetail({
+    world, D, people, ui,
+    getEmployers: () => enrichment.employers,
+    getKey: () => enrichment.key,
+    autoPerson: () => enrichment.autoPerson(),
+    enrichOne: name => enrichment.enrichOne(name)
+  });
+  ui.setHooks({
+    node: n => detail.showNode(n),
+    landed: n => { if (n.t === 'p') detail.showNode(n); }
+  });
+
   wireDataControls(found, landing);
 
   world.apply();
@@ -116,7 +131,7 @@ const boot = async () => {
   $('genDate').textContent = D.generatedAt || '';
 
   // Kept here for the Ask UI to reach without another pass over the data.
-  window.__NC = { world, D, people, ui, marker };
+  window.__NC = { world, D, people, ui, marker, detail };
 };
 
 /**

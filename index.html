@@ -69,7 +69,7 @@
 
 <div class="panel" id="ctl">
   <h1>Network Constellation</h1>
-  <p class="sub">Your LinkedIn connections, arranged by what people do. Drag to orbit, scroll to zoom, click a person to open their profile.</p>
+  <p class="sub">Your LinkedIn connections, arranged by what people do. Drag to orbit, scroll to zoom, click anyone or any employer for the full picture.</p>
 
   <div class="grp">
     <span class="lab">Ask your network</span>
@@ -89,7 +89,8 @@
         <label class="elab" for="apiKey">Anthropic API key</label>
         <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
         <label class="chk"><input type="checkbox" id="rememberKey"> Remember on this device</label>
-        <p class="ehelp small">Sent to Anthropic: employer names, and the text of your questions. Never people&rsquo;s names, emails or profile links. Use a key with a spend limit.</p>
+        <label class="chk"><input type="checkbox" id="autoPerson" checked> Ask Claude about each person I click</label>
+        <p class="ehelp small">Sent to Anthropic: employer names, the text of your questions, and &mdash; with the switch above on &mdash; the role and headline of a person you click. Never people&rsquo;s names, emails or profile links. Each read is cached, so a person costs once. Use a key with a spend limit.</p>
         <span class="lab">Scope</span>
         <div class="seg" id="scopeSeg" role="group" aria-label="Enrichment scope">
           <button type="button" data-scope="hubs" aria-pressed="true">Hubs</button>
@@ -158,6 +159,14 @@
     </div>
     <span class="hint" id="dataHint">Kept in this browser only</span>
   </div>
+</div>
+
+<div class="panel" id="detail" hidden>
+  <div class="d-head">
+    <span class="lab" id="detailKind">Person</span>
+    <button type="button" class="d-close" id="detailClose" aria-label="Close">&times;</button>
+  </div>
+  <div id="detailBody"></div>
 </div>
 
 <div class="panel" id="meta">

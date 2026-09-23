@@ -193,3 +193,30 @@ export async function enrichEmployers({
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, batches.length) }, worker));
   return { done, dollars, failures, cancelled: Boolean(signal?.aborted) };
 }
+
+/**
+ * Label one employer on the spot, for the company panel. One name goes out;
+ * the record lands in the same store the bulk run uses, so nothing is asked
+ * twice. Resolves the record, or null if the model could not place it.
+ */
+export async function enrichOne({ apiKey, model = MODEL_EMPLOYERS, name, signal }) {
+  const out = await labelBatch({ apiKey, model, names: [name], signal });
+  const e = out.employers.find(x => normKey(x.name) === normKey(name)) || out.employers[0];
+  if (!e) return null;
+  const record = {
+    key: normKey(name),
+    name,
+    hqCity: e.hqCity || null,
+    hqCountry: e.hqCountry || null,
+    hqCountryCode: e.hqCountryCode || null,
+    region: e.region || null,
+    industry: e.industry || null,
+    orgType: e.orgType || 'unknown',
+    confidence: e.confidence || 'low',
+    model,
+    enrichedAt: Date.now(),
+    cost: costOf(model, out.usage)
+  };
+  await putEmployers([record]);
+  return record;
+}

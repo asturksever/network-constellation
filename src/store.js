@@ -6,13 +6,16 @@
 // preferences that are not worth a transaction.
 
 const DB_NAME = 'network-constellation';
-const DB_VERSION = 1;
+// v2 added the per-person reads. Upgrades only ever add stores.
+const DB_VERSION = 2;
 const GRAPH = 'graph';
 const EMPLOYERS = 'employers';
+const PERSONS = 'persons';
 const CURRENT = 'current';
 
 export const KEY_STORAGE = 'nc.apiKey';
 export const MODEL_STORAGE = 'nc.model';
+export const AUTO_PERSON_STORAGE = 'nc.autoPerson';
 
 let dbPromise = null;
 
@@ -25,11 +28,15 @@ function open() {
       const db = req.result;
       if (!db.objectStoreNames.contains(GRAPH)) db.createObjectStore(GRAPH);
       if (!db.objectStoreNames.contains(EMPLOYERS)) db.createObjectStore(EMPLOYERS, { keyPath: 'key' });
+      if (!db.objectStoreNames.contains(PERSONS)) db.createObjectStore(PERSONS, { keyPath: 'key' });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
     req.onblocked = () => reject(new Error('Another tab is holding the database open.'));
   });
+  // A failed open must not be remembered, or one transient error poisons every
+  // later read and write for the life of the page.
+  dbPromise.catch(() => { dbPromise = null; });
   return dbPromise;
 }
 
@@ -100,10 +107,33 @@ export async function clearEmployers() {
   await tx(EMPLOYERS, 'readwrite', store => { store.clear(); });
 }
 
+/* ---------- per-person reads from Claude ---------- */
+/* Keyed by a hash of the text that was sent (role, headline, employer), never
+   by the person's name, so two people with the same headline share one read
+   and a rebuilt file finds its cache again. */
+
+export async function getPerson(key) {
+  try {
+    return await tx(PERSONS, 'readonly', (store, set) => {
+      request(store.get(key)).then(set);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function putPerson(record) {
+  await tx(PERSONS, 'readwrite', store => { store.put(record); });
+}
+
 /* ---------- everything, gone ---------- */
 
 export async function forgetAll() {
-  try { localStorage.removeItem(KEY_STORAGE); localStorage.removeItem(MODEL_STORAGE); } catch { /* storage off */ }
+  try {
+    localStorage.removeItem(KEY_STORAGE);
+    localStorage.removeItem(MODEL_STORAGE);
+    localStorage.removeItem(AUTO_PERSON_STORAGE);
+  } catch { /* storage off */ }
   if (dbPromise) {
     try { (await dbPromise).close(); } catch { /* already closed */ }
     dbPromise = null;
