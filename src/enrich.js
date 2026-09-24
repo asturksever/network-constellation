@@ -143,6 +143,7 @@ export async function enrichEmployers({
   let done = 0;
   let dollars = 0;
   let next = 0;
+  let unsaved = 0;
   const failures = [];
 
   const worker = async () => {
@@ -155,7 +156,10 @@ export async function enrichEmployers({
       try {
         out = await labelBatch({ apiKey, model, names: batch.map(j => j.name), signal });
       } catch (err) {
-        if (err instanceof LlmError && (err.code === 'auth' || err.code === 'cancelled')) throw err;
+        // Cancel is a way to finish, not a failure: stop this worker and let
+        // the run report what it kept.
+        if (signal?.aborted || (err instanceof LlmError && err.code === 'cancelled')) return;
+        if (err instanceof LlmError && err.code === 'auth') throw err;
         failures.push(err);
         done += batch.length;
         onProgress?.({ done, total: jobs.length, dollars });
@@ -181,7 +185,14 @@ export async function enrichEmployers({
         });
       }
 
-      await putEmployers(records);
+      // The batch is paid for by now. If storage refuses it, it still answers
+      // questions for this session; it just has to be bought again next time.
+      try {
+        await putEmployers(records);
+      } catch (err) {
+        console.error('Could not keep enriched employers in this browser.', err);
+        unsaved += records.length;
+      }
       onRecords?.(records);
 
       dollars += costOf(model, out.usage);
@@ -191,7 +202,7 @@ export async function enrichEmployers({
   };
 
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, batches.length) }, worker));
-  return { done, dollars, failures, cancelled: Boolean(signal?.aborted) };
+  return { done, dollars, failures, unsaved, cancelled: Boolean(signal?.aborted) };
 }
 
 /**
@@ -217,6 +228,10 @@ export async function enrichOne({ apiKey, model = MODEL_EMPLOYERS, name, signal 
     enrichedAt: Date.now(),
     cost: costOf(model, out.usage)
   };
-  await putEmployers([record]);
+  try {
+    await putEmployers([record]);
+  } catch (err) {
+    console.error('Could not keep the enriched employer in this browser.', err);
+  }
   return record;
 }

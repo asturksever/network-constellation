@@ -115,3 +115,61 @@ test('hubs are offered before the long tail of one-person employers', () => {
   assert.deepEqual(employerList(D, people, { hubsOnly: true }).map(j => j.name), ['Big Co']);
   assert.deepEqual(employerList(D, people).map(j => j.name), ['Big Co', 'Tiny Co']);
 });
+
+/* ---- the run itself: cancel, retry waits, storage failures ---- */
+
+import { enrichEmployers } from '../src/enrich.js';
+import { callClaude } from '../src/llm.js';
+
+const jobsOf = n => Array.from({ length: n }, (_, i) => ({ key: `e${i}`, name: `Employer ${i}` }));
+const labels = names => ({ employers: names.map(name => ({ name, orgType: 'company', confidence: 'high' })), usage: {} });
+
+test('Cancel ends an enrichment run with what it kept, not with an error', async () => {
+  const controller = new AbortController();
+  let calls = 0;
+  globalThis.window = {
+    __NC_LLM_MOCK: async names => {
+      if (++calls === 2) controller.abort();
+      if (controller.signal.aborted) throw Object.assign(new Error('Cancelled.'), { code: 'cancelled' });
+      return labels(names);
+    }
+  };
+  try {
+    const out = await enrichEmployers({ apiKey: 'x', jobs: jobsOf(200), signal: controller.signal });
+    assert.equal(out.cancelled, true);
+    assert.ok(out.done >= 40 && out.done < 200, `kept a partial run, got ${out.done}`);
+    assert.equal(out.failures.length, 0, 'a cancel is not a failure');
+  } finally {
+    delete globalThis.window;
+  }
+});
+
+test('a batch that cannot be stored is still handed back for this session', async () => {
+  // Node has no IndexedDB, so every write here fails exactly as a refused one would.
+  globalThis.window = { __NC_LLM_MOCK: async names => labels(names) };
+  const got = [];
+  try {
+    const out = await enrichEmployers({ apiKey: 'x', jobs: jobsOf(50), onRecords: r => got.push(...r) });
+    assert.equal(out.unsaved, 50);
+    assert.equal(got.length, 50, 'the records reach the caller even though storage refused them');
+  } finally {
+    delete globalThis.window;
+  }
+});
+
+test('Cancel cuts a rate-limit wait short instead of sleeping it out', async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ error: { message: 'slow down' } }),
+    { status: 429, headers: { 'retry-after': '30' } });
+  const controller = new AbortController();
+  const t0 = Date.now();
+  setTimeout(() => controller.abort(), 50);
+  try {
+    await assert.rejects(
+      callClaude({ apiKey: 'x', model: 'claude-haiku-4-5', system: 's', user: 'u', schema: {}, signal: controller.signal }),
+      err => err.code === 'cancelled');
+    assert.ok(Date.now() - t0 < 2000, 'returned promptly, not after the 30 s retry-after');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

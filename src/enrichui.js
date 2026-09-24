@@ -126,9 +126,10 @@ export async function wireEnrich({ D, people, onEmployers, say }) {
         }
       });
 
-      const note = out.failures.length ? ` · ${out.failures.length} batches failed` : '';
+      const note = (out.failures.length ? ` · ${out.failures.length} batches failed` : '') +
+        (out.unsaved ? ` · ${fmt(out.unsaved)} not saved, this session only` : '');
       say?.(out.cancelled
-        ? `Stopped — ${fmt(out.done)} done, kept`
+        ? `Stopped — ${fmt(out.done)} done, kept${note}`
         : `Enriched ${fmt(out.done)} employers · $${out.dollars.toFixed(2)}${note}`);
       statEl.textContent = `${fmt(out.done)} / ${fmt(jobs.length)} · $${out.dollars.toFixed(2)}`;
     } catch (err) {

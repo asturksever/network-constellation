@@ -35,7 +35,18 @@ export class LlmError extends Error {
   }
 }
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+/**
+ * A wait between retries that Cancel can cut short. Without the signal, a
+ * rate-limited run went on sleeping for up to thirty seconds after the user
+ * had asked it to stop, and then sent another request.
+ */
+const sleep = (ms, signal) => new Promise((resolve, reject) => {
+  const cancelled = () => new LlmError('Cancelled.', { code: 'cancelled' });
+  if (signal?.aborted) { reject(cancelled()); return; }
+  const t = setTimeout(() => { signal?.removeEventListener('abort', stop); resolve(); }, ms);
+  const stop = () => { clearTimeout(t); reject(cancelled()); };
+  signal?.addEventListener('abort', stop, { once: true });
+});
 
 /** Dollars for one response's usage. */
 export function costOf(model, usage) {
@@ -139,7 +150,7 @@ export async function callClaude({
     if (res.status === 429 || res.status >= 500) {
       lastError = new LlmError(message, { status: res.status, code: res.status === 429 ? 'rate_limited' : 'server', retryable: true });
       const after = Number(res.headers.get('retry-after'));
-      await sleep(Number.isFinite(after) && after > 0 ? after * 1000 : Math.min(30_000, 2 ** attempt * 1000));
+      await sleep(Number.isFinite(after) && after > 0 ? after * 1000 : Math.min(30_000, 2 ** attempt * 1000), signal);
       continue;
     }
     throw new LlmError(message, { status: res.status, code: 'error' });
@@ -230,7 +241,7 @@ export async function callClaudeWithSearch({
       }
       if (res.status === 429 || res.status >= 500) {
         const after = Number(res.headers.get('retry-after'));
-        await sleep(Number.isFinite(after) && after > 0 ? after * 1000 : Math.min(30_000, 2 ** attempt * 1000));
+        await sleep(Number.isFinite(after) && after > 0 ? after * 1000 : Math.min(30_000, 2 ** attempt * 1000), signal);
         res = null;
         continue;
       }
