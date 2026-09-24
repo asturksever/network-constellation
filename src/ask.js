@@ -57,6 +57,7 @@ export const FACETS = [
 const STOP = new Set(('who do i know does anyone any my in at the a an of for on with to is are that which what where can could' +
   ' help me find looking look need want know knows working work works someone somebody people person contact contacts network' +
   ' and or from get introduce introduction intro warm about please would should might there here best good top some' +
+  ' you your yours anybody everyone everybody all'+
   // location cue words: they mark a place, they are not distinctive terms.
   ' based located headquartered hq near around').split(/\s+/));
 
@@ -180,6 +181,18 @@ export function runQuery(filter, people, opts = {}) {
   const out = [];
   let excluded = 0;
 
+  // Something has to narrow the network. A question with no field, role,
+  // seniority, place or employer type narrows only by its words, so a person
+  // must mention one of them; with no words either, there is no answer.
+  // Without this, "who do you know?" ranked thousands of people by nothing
+  // but recency and whether they named an employer.
+  const gated = subjects.length > 0 || functions.length > 0 || facets.length > 0 ||
+    minRank != null || Boolean(filter.location && enrich) || (filter.orgTypes?.length > 0 && enrich);
+  if (!gated && !terms.length) {
+    out.excludedForLocation = 0;
+    return out;
+  }
+
   for (const p of people) {
     const hay = `${p.role} ${p.company} ${p.headline}`;
     const low = hay.toLowerCase();
@@ -251,6 +264,7 @@ export function runQuery(filter, people, opts = {}) {
     for (const t of terms) {
       if (low.includes(t)) { termScore += idf(t); termHits.push(t); }
     }
+    if (!gated && !termHits.length) continue;
     score += termScore;
     if (termHits.length) why.push(termHits.slice(0, 3).join(' + '));
 

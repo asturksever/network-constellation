@@ -45,18 +45,25 @@ export function wireAsk({ world, D, people, ui }) {
 
   $('askMore').addEventListener('click', () => { shown += PAGE; render(); });
 
-  function clear() {
+  /** Nothing lit, nobody marked, no rows: what an empty answer leaves behind. */
+  function unlight() {
     results = [];
     at = 0;
     landed = false;
     world.setHits(null);
+    world.setHit(null);
+    ui.clearHit();
+    listEl.innerHTML = '';
+    $('askMore').hidden = true;
+  }
+
+  function clear() {
+    unlight();
     panel.hidden = true;
     document.body.classList.remove('answering');
-    listEl.innerHTML = '';
     queryEl.textContent = '';
     countEl.textContent = '';
     $('askSub').textContent = '';
-    $('askMore').hidden = true;
     emptyEl.hidden = true;
   }
 
@@ -113,9 +120,9 @@ export function wireAsk({ world, D, people, ui }) {
       : 'in your network';
 
     if (!results.length) {
-      listEl.innerHTML = '';
+      // the previous answer's lit set and rows must not outlive it
+      unlight();
       emptyEl.hidden = false;
-      at = 0;
       emptyEl.innerHTML = filter.subjects.length || filter.functions.length || filter.facets.length || filter.terms.length
         ? 'Nobody here matches that. The query above is what it actually ran — if it read the question wrongly, rephrase towards the words people put in their headlines.'
         : 'No usable signal in that question. Try naming a field, a job function or a distinctive word.';

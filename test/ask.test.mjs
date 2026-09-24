@@ -79,3 +79,15 @@ test('free terms are weighted by rarity, so a rare word outranks a common one', 
   const idf = buildIdf(people);
   assert.ok(idf('bathymetry') > idf('engineer'), 'rare term must outweigh the ubiquitous one');
 });
+
+test('a question with no signal returns nobody, not everybody', () => {
+  const people = [
+    person({ name: 'A', role: 'Engineer', company: 'Acme', headline: 'engineer at Acme' }),
+    person({ name: 'B', role: 'Hydrographer', company: 'Beta', headline: 'bathymetry surveys at Beta' })
+  ];
+  for (const q of ['who do you know?', 'anyone?', 'asdfgh qwerty']) {
+    assert.equal(runQuery(resolveQuery(q), people).length, 0, q);
+  }
+  // a word that does appear still finds its person
+  assert.deepEqual(runQuery(resolveQuery('anyone doing bathymetry'), people).map(p => p.name), ['B']);
+});
