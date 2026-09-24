@@ -1,4 +1,4 @@
-# Network Constellation
+# Linkedin Network Constellation
 
 **See who you know.** Drop in your LinkedIn connections and they arrange
 themselves by what people do: thousands of names become a few dozen clusters
