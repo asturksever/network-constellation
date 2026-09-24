@@ -189,7 +189,15 @@ export async function putResearch(record) {
 
 /* ---------- everything, gone ---------- */
 
-export async function forgetAll() {
+/**
+ * Erase everything this page keeps. Resolves only once the database is
+ * actually gone: another open tab of this page can hold it, and reloading
+ * before the delete finishes brought the "forgotten" graph straight back.
+ * Those tabs are asked to let go (each closes on versionchange); if one does
+ * not within a few seconds, this rejects with a message saying so, and the
+ * delete still completes on its own as soon as that tab is closed.
+ */
+export async function forgetAll({ wait = 5000 } = {}) {
   try {
     localStorage.removeItem(KEY_STORAGE);
     localStorage.removeItem(MODEL_STORAGE);
@@ -199,9 +207,16 @@ export async function forgetAll() {
     try { (await dbPromise).close(); } catch { /* already closed */ }
     dbPromise = null;
   }
-  await new Promise(resolve => {
+  await new Promise((resolve, reject) => {
     const req = indexedDB.deleteDatabase(DB_NAME);
-    req.onsuccess = req.onerror = req.onblocked = () => resolve();
+    let timer = null;
+    req.onsuccess = () => { clearTimeout(timer); resolve(); };
+    req.onerror = () => { clearTimeout(timer); reject(req.error || new Error('The browser would not erase its database.')); };
+    req.onblocked = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => reject(new Error(
+        'Another tab of this page is still open, so your data is not erased yet. Close it and the erase finishes by itself.')), wait);
+    };
   });
 }
 

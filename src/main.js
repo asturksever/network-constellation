@@ -209,7 +209,7 @@ async function start(found, landing, existing) {
 
   renderOverview({ D, people, world });
 
-  wireDataControls(found, landing);
+  wireDataControls(found, landing, ui);
 
   if (!existing) {
     world.apply();
@@ -241,7 +241,7 @@ async function start(found, landing, existing) {
  * three.js has a scene graph to dispose of. A reload costs one page load and
  * cannot leak. The landing is how you get there, with a way back.
  */
-function wireDataControls(found, landing) {
+function wireDataControls(found, landing, ui) {
   const hint = $('dataHint');
   const replace = $('replaceData');
   const forget = $('forgetData');
@@ -279,11 +279,21 @@ function wireDataControls(found, landing) {
     if (forget.dataset.armed !== '1') {
       forget.dataset.armed = '1';
       forget.textContent = 'Erase from this browser?';
-      setTimeout(() => { forget.dataset.armed = ''; forget.textContent = 'Forget'; }, 4000);
+      setTimeout(() => { if (!forget.disabled) { forget.dataset.armed = ''; forget.textContent = 'Forget'; } }, 4000);
       return;
     }
-    await forgetAll();
-    location.reload();
+    forget.disabled = true;
+    forget.textContent = 'Erasing…';
+    try {
+      await forgetAll();
+      location.reload();
+    } catch (err) {
+      console.error(err);
+      ui.say(err.message, 9000);
+      forget.dataset.armed = '';
+      forget.textContent = 'Forget';
+      forget.disabled = false;
+    }
   });
 }
 

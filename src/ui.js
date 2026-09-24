@@ -258,10 +258,11 @@ function tipHtml(n, D) {
 }
 
 let statusTimer = null;
-function say(text) {
+/** One line at the bottom of the scene. `hold` is for messages that need reading, not glancing. */
+function say(text, hold = 2600) {
   const el = $('status');
   el.textContent = text;
   el.classList.remove('gone');
   clearTimeout(statusTimer);
-  statusTimer = setTimeout(() => el.classList.add('gone'), 2600);
+  statusTimer = setTimeout(() => el.classList.add('gone'), hold);
 }
