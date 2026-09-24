@@ -1,7 +1,7 @@
 // Control panel, tooltip and status line. Everything here talks to the world
 // object returned by createConstellation and knows nothing about three.js.
 
-import { fmt, esc, $ } from './dom.js';
+import { fmt, esc, $, sceneRight } from './dom.js';
 
 export function wireUI(world, D, hit) {
   /* ---- tooltip ---- */
@@ -18,7 +18,7 @@ export function wireUI(world, D, hit) {
   document.addEventListener('mousemove', e => {
     if (!tip.classList.contains('on')) return;
     let x = e.clientX + 16, y = e.clientY + 16;
-    if (x + tip.offsetWidth > innerWidth - 8) x = e.clientX - tip.offsetWidth - 16;
+    if (x + tip.offsetWidth > sceneRight() - 8) x = e.clientX - tip.offsetWidth - 16;
     if (y + tip.offsetHeight > innerHeight - 8) y = e.clientY - tip.offsetHeight - 16;
     tip.style.left = x + 'px';
     tip.style.top = y + 'px';

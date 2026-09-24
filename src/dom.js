@@ -12,3 +12,19 @@ const ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ENTITIES[c]);
 
 export const $ = id => document.getElementById(id);
+
+/**
+ * Where the open scene ends on the right: the left edge of a side panel if
+ * one is showing, the window's edge otherwise. The hit card and the tooltip
+ * flip against this, so neither draws over the panel you are reading.
+ */
+export function sceneRight() {
+  for (const id of ['detail', 'answer']) {
+    const el = $(id);
+    if (el && !el.hidden && el.getClientRects().length) {   // displayed (offsetParent is null for fixed)
+      const r = el.getBoundingClientRect();
+      if (r.top < innerHeight / 2) return r.left;   // a side column, not a bottom sheet
+    }
+  }
+  return innerWidth;
+}

@@ -309,15 +309,23 @@ button:active, .ares:active, .drow:active, .icon-btn:active, .linky:active, a.lp
   bottom: 18px; left: 50%;
   transform: translateX(-50%);
   z-index: 15;
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--muted);
+  width: max-content;
+  max-width: min(560px, calc(100vw - 150px));
+  text-align: center;
+  line-height: 1.4;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-2);
   background: var(--material-2);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--hair);
   padding: 7px 15px;
-  border-radius: 20px;
+  border-radius: 16px;
+  /* it reports, it never takes a click: faded or not, the scene under it stays live */
+  pointer-events: none;
   transition: opacity 0.4s;
 }
 #status.gone { opacity: 0; }

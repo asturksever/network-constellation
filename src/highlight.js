@@ -9,6 +9,8 @@
 // The dot itself is brightened by graph.js (setHit); this module only draws the
 // furniture around it.
 
+import { sceneRight } from './dom.js';
+
 export function createHighlight(container, world, D) {
   const el = document.createElement('div');
   el.className = 'nchit';
@@ -75,8 +77,9 @@ export function createHighlight(container, world, D) {
         } else {
           el.style.left = c.x + 'px';
           el.style.top = c.y + 'px';
-          // keep the card on screen: swing it left of the marker near the edge
-          el.classList.toggle('flip', c.x > innerWidth - 380);
+          // keep the card in the open scene: swing it left of the marker near
+          // the window's edge, or near a side panel's
+          el.classList.toggle('flip', c.x > sceneRight() - 380);
           el.classList.add('vis');
         }
       }
