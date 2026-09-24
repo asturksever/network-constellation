@@ -4,14 +4,24 @@
 // heuristic caching to the ES modules and you end up debugging code you
 // changed ten minutes ago.
 //
-//   node scripts/dev-server.mjs [port]      default 8080
+//   node scripts/dev-server.mjs [port]           default 8080
+//   node scripts/dev-server.mjs [port] --bare    as GitHub Pages will serve it
+//
+// --bare answers 404 for everything that is gitignored and so never reaches
+// the public site — data/, logos/, dist/ — which is the only way to see the
+// landing page and the demo on a machine that has a real graph on disk. Run
+// it on its own port: a different origin also means empty browser storage,
+// which is what a first visitor has.
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 
 const ROOT = resolve('.');
-const PORT = Number(process.argv[2] || process.env.PORT || 8080);
+const args = process.argv.slice(2);
+const BARE = args.includes('--bare');
+const PORT = Number(args.find(a => /^\d+$/.test(a)) || process.env.PORT || 8080);
+const PRIVATE = /^\/(data|logos|dist)\//;
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -36,6 +46,7 @@ createServer(async (req, res) => {
     if (path.endsWith('/')) path += 'index.html';
     const file = normalize(join(ROOT, path));
     if (!file.startsWith(ROOT)) { res.writeHead(403); res.end(); return; }
+    if (BARE && PRIVATE.test(file.slice(ROOT.length))) throw Object.assign(new Error('bare'), { code: 'ENOENT' });
     const info = await stat(file);
     if (info.isDirectory()) { res.writeHead(301, { Location: path + '/' }); res.end(); return; }
     const body = await readFile(file);
@@ -50,5 +61,5 @@ createServer(async (req, res) => {
     res.end(err.code === 'ENOENT' ? 'File not found' : String(err));
   }
 }).listen(PORT, () => {
-  console.log(`http://localhost:${PORT}  (no-store, serving ${ROOT})`);
+  console.log(`http://localhost:${PORT}  (no-store, serving ${ROOT}${BARE ? ', bare: no data/ logos/ dist/' : ''})`);
 });
