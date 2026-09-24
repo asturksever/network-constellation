@@ -17,12 +17,18 @@ const DATA_URL = 'data/graph-data.json';
 const PEOPLE_URL = 'data/people.json';
 const SAMPLE_URL = 'sample/sample-connections.csv';
 
+// data/ and logos/ are gitignored: they exist only on the machine that ran
+// `npm run data` or `npm run logos`. Anywhere else — the public site above
+// all — asking for them is a guaranteed 404 in every visitor's console.
+const LOCAL = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+
 /**
  * Where a graph can come from, in order of preference:
  *
  *   1. inlined in the page      — the bundled single-file build
  *   2. this browser's storage   — a file dropped here earlier
  *   3. data/graph-data.json     — local development, after `npm run data`
+ *                                 (only asked for on localhost; see LOCAL)
  *
  * Nothing found means a first visit, which is the landing state rather than an
  * error. `people` is the rich classified view; when only the compact tuples
@@ -45,6 +51,7 @@ async function findGraph() {
     return { D: kept.D, people: kept.people || peopleFromTuples(kept.D), source: 'browser', sourceName: kept.sourceName };
   }
 
+  if (!LOCAL) return null;
   try {
     const res = await fetch(DATA_URL);
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -347,6 +354,7 @@ function fatal(err) {
  */
 async function loadLogos() {
   if (window.__NC_LOGOS) return window.__NC_LOGOS;
+  if (!LOCAL) return {};
   try {
     const res = await fetch('logos/manifest.json');
     if (!res.ok) return {};
