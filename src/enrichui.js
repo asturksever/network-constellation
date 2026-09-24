@@ -9,7 +9,7 @@ import { prefs, KEY_STORAGE, allEmployers } from './store.js';
 import { employerList, estimate, enrichEmployers, enrichOne, normKey } from './enrich.js';
 import { LlmError, MODEL_EMPLOYERS } from './llm.js';
 
-export async function wireEnrich({ D, people, onEmployers, say }) {
+export async function wireEnrich({ D, people, onEmployers, onKeyChange, say }) {
   const keyEl = $('apiKey');
   const rememberEl = $('rememberKey');
   const runEl = $('enrichRun');
@@ -28,7 +28,11 @@ export async function wireEnrich({ D, people, onEmployers, say }) {
   /* ---- the settings sheet ---- */
   const sheet = $('settings');
   const openBtn = $('openSettings');
+  // Panels drawn before a key existed say "add your API key"; when the sheet
+  // closes with a key newly added (or removed), they are told to redraw.
+  let hadKey = false;
   const openSheet = () => {
+    hadKey = Boolean(keyEl.value.trim());
     sheet.hidden = false;
     document.body.classList.add('sheet-up');
     setTimeout(() => (keyEl.value ? $('enrichRun') : keyEl)?.focus(), 60);
@@ -37,6 +41,7 @@ export async function wireEnrich({ D, people, onEmployers, say }) {
     sheet.hidden = true;
     document.body.classList.remove('sheet-up');
     openBtn?.focus();
+    if (Boolean(keyEl.value.trim()) !== hadKey) onKeyChange?.();
   };
   openBtn?.addEventListener('click', openSheet);
   $('settingsClose')?.addEventListener('click', closeSheet);

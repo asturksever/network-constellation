@@ -196,15 +196,18 @@ async function start(found, landing, existing) {
   }
 
   const ask = wireAsk({ world, D, people, ui });
+  let detail = null;
   const enrichment = await wireEnrich({
     D, people, say: ui.say,
-    onEmployers: m => ask.setEmployers(m)
+    onEmployers: m => ask.setEmployers(m),
+    // an open profile drawn before the key existed still says "add your key"
+    onKeyChange: () => detail?.rerender()
   });
   ask.enrichment = enrichment;
 
   // The side panel. It learns about clicks and landings through ui's hooks
   // rather than by re-binding the graph's click handler.
-  const detail = createDetail({
+  detail = createDetail({
     world, D, people, ui,
     getEmployers: () => enrichment.employers,
     getKey: () => enrichment.key,
