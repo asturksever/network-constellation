@@ -2,7 +2,11 @@
 // Flattens the site into one self-contained HTML file for publishing as a
 // Claude Artifact: inline CSS, inline data, modules concatenated in order.
 //
-//   node scripts/bundle.mjs [out.html]
+//   node scripts/bundle.mjs [out.html]              your graph and logos inlined
+//   node scripts/bundle.mjs --no-data [out.html]    the landing and the demo only
+//
+// The first is for you: it carries every name in data/, so never publish it.
+// The second carries nothing of yours and is safe to hand to anyone.
 //
 // The output has no <!doctype>/<html>/<head>/<body> because the Artifact tool
 // supplies those. Open it locally and it still renders — browsers infer them.
@@ -16,7 +20,10 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { leanPeople } from '../src/build.js';
 
-const OUT = process.argv[2] || 'dist/network-constellation.html';
+const args = process.argv.slice(2);
+const NO_DATA = args.includes('--no-data');
+const OUT = args.find(a => !a.startsWith('--')) ||
+  (NO_DATA ? 'dist/network-constellation-demo.html' : 'dist/network-constellation.html');
 const DATA = 'data/graph-data.json';
 
 // Dependency order. taxonomy/csv/classify must precede ask.js: without them the
@@ -76,8 +83,10 @@ function inlineLogos() {
   return out;
 }
 
-const hasData = existsSync(DATA);
-if (!hasData) {
+const hasData = !NO_DATA && existsSync(DATA);
+if (NO_DATA) {
+  console.log('--no-data: the landing and the demo only; nothing from data/ or logos/.');
+} else if (!hasData) {
   console.log('No data — building an upload-only bundle. `npm run data` bakes a graph in.');
 }
 
@@ -151,7 +160,8 @@ const sampleScript = existsSync(SAMPLE)
   ? `<script>window.__NC_SAMPLE=${JSON.stringify(readFileSync(SAMPLE, 'utf8')).replace(/</g, '\\u003c')};</` + `script>\n`
   : '';
 
-const logos = inlineLogos();
+// Logos are fetched for your employers, so they say who your network works for.
+const logos = NO_DATA ? null : inlineLogos();
 const logoScript = logos
   ? `<script>window.__NC_LOGOS=${JSON.stringify(logos).replace(/</g, '\\u003c')};</` + `script>\n`
   : '';

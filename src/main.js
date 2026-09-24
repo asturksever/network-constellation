@@ -18,9 +18,10 @@ const PEOPLE_URL = 'data/people.json';
 const SAMPLE_URL = 'sample/sample-connections.csv';
 
 // data/ and logos/ are gitignored: they exist only on the machine that ran
-// `npm run data` or `npm run logos`. Anywhere else — the public site above
-// all — asking for them is a guaranteed 404 in every visitor's console.
-const LOCAL = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+// `npm run data` or `npm run logos`, served by `npm run dev`. Anywhere else —
+// the public site above all — asking for them is a guaranteed 404 in every
+// visitor's console. (From file:// only the bundle runs, and it carries its own.)
+const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
 
 /**
  * Where a graph can come from, in order of preference:
