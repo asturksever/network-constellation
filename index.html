@@ -6,7 +6,10 @@
 <!-- Bounds where anything on this page can send data. The only origin it may
      talk to besides itself is Anthropic's API, and only once you paste a key. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'">
-<title>Network Constellation</title>
+<title>Network Constellation — see who you know</title>
+<meta name="description" content="Drop in your LinkedIn connections and see them arranged by what people do. Search, orbit and ask questions in plain English. Runs in your browser; nothing is uploaded. Open source.">
+<meta name="theme-color" content="#080b0e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect width='22' height='22' rx='5' fill='%23080b0e'/%3E%3Cg stroke-width='1.3'%3E%3Cline x1='11' y1='11' x2='4.5' y2='5.5' stroke='%238bb9fd'/%3E%3Cline x1='11' y1='11' x2='17.5' y2='7.5' stroke='%230287ab'/%3E%3Cline x1='11' y1='11' x2='9.5' y2='18.5' stroke='%23ffd166'/%3E%3C/g%3E%3Ccircle cx='11' cy='11' r='2.6' fill='%23eef2f5'/%3E%3Ccircle cx='4.5' cy='5.5' r='1.9' fill='%238bb9fd'/%3E%3Ccircle cx='17.5' cy='7.5' r='1.9' fill='%230287ab'/%3E%3Ccircle cx='9.5' cy='18.5' r='1.9' fill='%23ffd166'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
@@ -14,54 +17,121 @@
 <div id="scene"></div>
 <div id="labels"></div>
 
-<div id="landing" class="gone">
-  <div class="landing-inner">
-    <div class="panel landing-brand">
-      <div class="brandline">
-        <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true" class="mark">
-          <line x1="11" y1="11" x2="4.5" y2="5.5" stroke="#8bb9fd" stroke-width="1.1"/>
-          <line x1="11" y1="11" x2="17.5" y2="7.5" stroke="#0287ab" stroke-width="1.1"/>
-          <line x1="11" y1="11" x2="9.5" y2="18.5" stroke="#ffd166" stroke-width="1.1"/>
-          <circle cx="11" cy="11" r="2.5" fill="#eef2f5"/>
-          <circle cx="4.5" cy="5.5" r="1.7" fill="#8bb9fd"/>
-          <circle cx="17.5" cy="7.5" r="1.7" fill="#0287ab"/>
-          <circle cx="9.5" cy="18.5" r="1.7" fill="#ffd166"/>
-        </svg>
-        <h1>Network Constellation</h1>
+<div id="landing" class="gone" aria-label="Network Constellation — start here">
+  <div class="lp-veil" aria-hidden="true"></div>
+
+  <header class="lp-top">
+    <a class="lp-brand" href="./" aria-label="Network Constellation">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true" class="mark">
+        <line x1="11" y1="11" x2="4.5" y2="5.5" stroke="#8bb9fd" stroke-width="1.1"/>
+        <line x1="11" y1="11" x2="17.5" y2="7.5" stroke="#0287ab" stroke-width="1.1"/>
+        <line x1="11" y1="11" x2="9.5" y2="18.5" stroke="#ffd166" stroke-width="1.1"/>
+        <circle cx="11" cy="11" r="2.5" fill="#eef2f5"/>
+        <circle cx="4.5" cy="5.5" r="1.7" fill="#8bb9fd"/>
+        <circle cx="17.5" cy="7.5" r="1.7" fill="#0287ab"/>
+        <circle cx="9.5" cy="18.5" r="1.7" fill="#ffd166"/>
+      </svg>
+      <span>Network Constellation</span>
+    </a>
+    <nav class="lp-nav" aria-label="Page">
+      <a href="#lp-how" data-goto="lp-how">Get your file</a>
+      <a href="#lp-privacy" data-goto="lp-privacy">Privacy</a>
+      <a href="https://github.com/asturksever/network-constellation" rel="noopener">GitHub</a>
+      <button type="button" class="lp-back" id="landingBack" hidden>Back to your graph</button>
+    </nav>
+  </header>
+
+  <section class="lp-hero">
+    <div class="lp-pitch">
+      <span class="lp-eyebrow">Open source &middot; runs in your browser</span>
+      <h1 class="lp-h1">See who you know.</h1>
+      <p class="lp-lede">Drop in your LinkedIn connections and they arrange themselves by what people do. Thousands of names become a few dozen clusters you can orbit, search and ask questions of in plain English.</p>
+      <div class="lp-cta">
+        <button type="button" class="lp-btn" id="tryDemo">Explore the demo</button>
+        <button type="button" class="lp-btn ghost" data-goto="lp-drop">Use my connections</button>
       </div>
-      <p class="sub">Thousands of connections are unreadable as a list. Arranged by what people do, they become a few dozen lobes you can see at a glance, and question in plain English.</p>
-      <div class="pills">
-        <span class="pill">Runs in your browser</span>
-        <span class="pill">No account</span>
-        <span class="pill">MIT</span>
+      <div class="lp-asks" id="demoAsks">
+        <span class="lp-k">Or ask the demo</span>
+        <div class="lp-chips">
+          <button type="button" class="lp-chip" data-ask="anyone in satellite imagery?">anyone in satellite imagery?</button>
+          <button type="button" class="lp-chip" data-ask="who can intro me to a VC?">who can intro me to a VC?</button>
+          <button type="button" class="lp-chip" data-ask="recruiters I know">recruiters I know</button>
+          <button type="button" class="lp-chip" data-ask="anyone in healthcare?">anyone in healthcare?</button>
+        </div>
+        <span class="lp-fine">250 invented people. Nothing you do in the demo is kept.</span>
       </div>
     </div>
 
-    <div class="panel landing-steps">
-      <span class="lab">How it works</span>
-      <ol class="steps">
-        <li><span class="stepn">01</span><div><span class="steph">Export</span><span class="stepb">LinkedIn &rarr; Settings &rarr; Data privacy &rarr; Get a copy of your data &rarr; tick <em>Connections</em>. It arrives by email, usually within ten minutes.</span></div></li>
-        <li><span class="stepn">02</span><div><span class="steph">Drop</span><span class="stepb">The CSV is parsed in this tab and kept in this browser. Names, roles and employers never reach a server.</span></div></li>
-        <li><span class="stepn">03</span><div><span class="steph">Ask</span><span class="stepb">&ldquo;Anyone in satellite imagery licensing?&rdquo; Answered here in milliseconds, with the query it ran shown above the results.</span></div></li>
+    <div class="lp-drop" id="lp-drop">
+      <span class="lp-k">Your connections</span>
+      <div class="landing-main">
+        <div id="dropzone" tabindex="0" role="button" aria-label="Drop or choose your Connections.csv">
+          <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br br2"></span>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffd166" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 16V4"/><path d="M7.5 8.5 12 4l4.5 4.5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
+          </svg>
+          <span class="dz-title">Drop Connections.csv here</span>
+          <span class="dz-sub">or <button type="button" class="linky" id="pickFile">choose a file</button></span>
+          <span class="dz-hint">Read in this tab &middot; kept in this browser &middot; never uploaded</span>
+          <input type="file" id="csvFile" accept=".csv,text/csv" hidden>
+        </div>
+        <div class="landing-state" id="landingState" aria-live="polite"></div>
+      </div>
+      <p class="lp-fine">No file yet? <a href="#lp-how" data-goto="lp-how" class="linky">Here&rsquo;s how to get it</a> &mdash; it takes about ten minutes.</p>
+    </div>
+  </section>
+
+  <div class="lp-more">
+    <section class="lp-sec" id="lp-how">
+      <h2 class="lp-h2">Get your Connections.csv</h2>
+      <p class="lp-sub">LinkedIn will give you a copy of your own data. No password to hand over, no browser extension, nothing that breaks when LinkedIn changes its site.</p>
+      <ol class="lp-grid3 lp-steps">
+        <li class="lp-tile"><span class="lp-n">1</span><h3>Ask for it</h3><p>Open LinkedIn&rsquo;s <a href="https://www.linkedin.com/mypreferences/d/download-my-data" rel="noopener">Get a copy of your data</a> page (Settings &rarr; Data privacy). Pick <em>Want something in particular?</em> and tick <em>Connections</em>.</p></li>
+        <li class="lp-tile"><span class="lp-n">2</span><h3>Download it</h3><p>LinkedIn emails you when it is ready, usually within ten minutes. Download the archive and unzip it.</p></li>
+        <li class="lp-tile"><span class="lp-n">3</span><h3>Drop it here</h3><p>Drop <em>Connections.csv</em> on this page. It is read in this tab and kept in this browser, and nowhere else.</p></li>
       </ol>
-    </div>
+      <p class="lp-fine">Any CSV with a name column and a headline or job title works too. You can say which column is which before anything is built.</p>
+    </section>
 
-    <div class="landing-main">
-      <div id="dropzone" tabindex="0" role="button" aria-label="Drop or choose your Connections.csv">
-        <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br br2"></span>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffd166" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12 16V4"/><path d="M7.5 8.5 12 4l4.5 4.5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
-        </svg>
-        <span class="dz-title">Drop Connections.csv here</span>
-        <span class="dz-sub">or <button type="button" class="linky" id="pickFile">choose a file</button></span>
-        <span class="dz-hint">Read in this tab &middot; stored in this browser &middot; never uploaded</span>
-        <input type="file" id="csvFile" accept=".csv,text/csv" hidden>
+    <section class="lp-sec" id="lp-what">
+      <h2 class="lp-h2">A map, a search and an answer</h2>
+      <div class="lp-grid4">
+        <div class="lp-tile"><h3>See the shape</h3><p>Everyone is placed by the field they work in, and people who name the same employer are joined through it. Orbit, zoom, or isolate one field.</p></div>
+        <div class="lp-tile"><h3>Ask in plain English</h3><p>&ldquo;Anyone in satellite imagery licensing?&rdquo; is answered on your machine in milliseconds, with the query it ran shown above the answer so you can check its reasoning.</p></div>
+        <div class="lp-tile"><h3>Find anyone</h3><p>Type a name and the camera flies to them. Click anyone for their panel: role, employer, and who else you know there.</p></div>
+        <div class="lp-tile"><h3>Go deeper, if you like</h3><p>With your own Anthropic API key, Claude places employers so &ldquo;any VC in SF?&rdquo; works, and researches one person on the public web when you press <em>Enrich profile</em>.</p></div>
       </div>
-      <div class="landing-state" id="landingState"></div>
-      <p class="demo">No export to hand? <button type="button" class="linky" id="tryDemo">Open the demo</button> &mdash; 250 invented people, same machinery.</p>
-    </div>
+    </section>
 
-    <p class="panel landing-privacy">Nothing is uploaded. Claude is optional, needs your own key, and only ever sees what Settings spells out &mdash; employer names and your questions by default, a name only when you press <strong>Enrich profile</strong>. Never emails or profile links.</p>
+    <section class="lp-sec" id="lp-privacy">
+      <h2 class="lp-h2">What leaves your browser</h2>
+      <p class="lp-sub">There is no backend, no account and no analytics. This is everything that can leave this tab, in full.</p>
+      <div class="lp-grid3">
+        <div class="lp-tile lp-tier"><span class="lp-dot" style="--c:#30d158"></span><h3>Always stays here</h3><p>Your file, the graph built from it, and every search and question that is answered locally, which without a key is all of them.</p></div>
+        <div class="lp-tile lp-tier"><span class="lp-dot" style="--c:#0a84ff"></span><h3>With your key, as you use it</h3><p>Employer names, to look up headquarters and organisation type, and the text of your questions, to read them more closely. Sent from your browser straight to Anthropic, with your key, which is kept only if you tick <em>Remember</em>.</p></div>
+        <div class="lp-tile lp-tier"><span class="lp-dot" style="--c:#ff9f0a"></span><h3>Only when you press Enrich profile</h3><p>One person&rsquo;s name, headline and employer, so Claude can search the public web for them. Never automatically.</p></div>
+      </div>
+      <p class="lp-fine">Never sent anywhere: email addresses or profile links. Without a key, the one request this page makes to anyone else is for the 3D library, from jsDelivr.</p>
+    </section>
+
+    <section class="lp-sec" id="lp-oss">
+      <h2 class="lp-h2">Open source, MIT licensed</h2>
+      <p class="lp-sub">No build step, no dependencies, no server. Read every line, run it on your own machine, or put your own copy on GitHub Pages in a few minutes.</p>
+      <pre class="lp-code"><code>git clone https://github.com/asturksever/network-constellation
+cd network-constellation
+npm run dev</code></pre>
+      <div class="lp-links">
+        <a class="lp-btn ghost" href="https://github.com/asturksever/network-constellation" rel="noopener">View on GitHub</a>
+        <a class="lp-link" href="https://github.com/asturksever/network-constellation/blob/main/docs/tutorial.md" rel="noopener">Tutorial</a>
+        <a class="lp-link" href="https://github.com/asturksever/network-constellation/blob/main/docs/install.md" rel="noopener">Install &amp; self-host</a>
+        <a class="lp-link" href="https://github.com/asturksever/network-constellation/blob/main/docs/ask-your-graph.md" rel="noopener">How questions are answered</a>
+      </div>
+    </section>
+
+    <footer class="lp-foot">
+      <span>Network Constellation &middot; MIT &middot; made by Said Turksever</span>
+      <span>Not affiliated with LinkedIn.</span>
+    </footer>
   </div>
 </div>
 

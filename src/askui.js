@@ -326,8 +326,15 @@ export function wireAsk({ world, D, people, ui }) {
     $('askHint').textContent = 'Enter runs · headlines unavailable in this build';
   }
 
+  /** Put a question in the box and run it, as if it had been typed. */
+  function ask(question) {
+    box.value = question;
+    box.dataset.ran = question;
+    run(question);
+  }
+
   Object.assign(api, {
-    run, clear, setEmployers,
+    run, ask, clear, setEmployers,
     detail: null,
     set enrichment(v) { api._enrich = v; },
     get enrichment() { return api._enrich; }

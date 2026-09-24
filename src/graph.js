@@ -184,7 +184,7 @@ export function createConstellation(el, D, opts = {}) {
     .linkOpacity(1)
     .enableNodeDrag(false)
     .cooldownTicks(170)
-    .warmupTicks(8);
+    .warmupTicks(opts.warmupTicks ?? 8);
 
   G.d3Force('charge').strength(-38).distanceMax(340);
   G.d3Force('link').distance(l => (l.k === 'spine' ? 130 : l.k === 'comp' ? 34 : 22));
@@ -253,17 +253,53 @@ export function createConstellation(el, D, opts = {}) {
 
   let wantFrame = true;
   let onStats = () => {};
+  let lastStats = null;
+
+  /**
+   * A slow turn about the vertical axis, for the landing page. About one
+   * revolution in a hundred seconds: enough to feel alive, too slow to
+   * pull the eye off the text in front of it. Each frame starts from wherever
+   * the camera is, so a framing move that lands mid-turn is simply carried on.
+   */
+  let orbitRaf = 0;
+  function orbit(on) {
+    cancelAnimationFrame(orbitRaf);
+    orbitRaf = 0;
+    if (!on || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    wantFrame = false;          // the settle must not tween against the turn
+    let last = performance.now();
+    const tick = t => {
+      const a = Math.min(64, t - last) * 0.000063;
+      last = t;
+      const { x, y, z } = G.camera().position;
+      G.cameraPosition({ x: x * Math.cos(a) - z * Math.sin(a), y, z: x * Math.sin(a) + z * Math.cos(a) });
+      orbitRaf = requestAnimationFrame(tick);
+    };
+    orbitRaf = requestAnimationFrame(tick);
+  }
+
+  /** Stop drawing and give the WebGL context back, so another world can take the element. */
+  function dispose() {
+    orbit(false);
+    G.pauseAnimation();
+    G.graphData({ nodes: [], links: [] });
+    const r = G.renderer();
+    r.dispose();
+    r.forceContextLoss?.();
+    el.innerHTML = '';
+  }
 
   function apply() {
     const g = build();
     G.graphData(g);
     wantFrame = true;
-    onStats({
+    lastStats = {
       nodes: g.nodes.length,
       links: g.links.length,
       people: g.nodes.filter(n => n.t === 'p').length,
       comps: g.nodes.filter(n => n.t === 'comp').length
-    });
+    };
+    onStats(lastStats);
   }
 
   return {
@@ -282,8 +318,12 @@ export function createConstellation(el, D, opts = {}) {
     frameNodes,
     flyTo,
     swoopTo,
+    orbit,
+    dispose,
     isVisible,
-    onStats(fn) { onStats = fn; },
+    // a listener that arrives after the layout (the demo, wired onto the
+    // world already turning behind the landing) still hears the counts
+    onStats(fn) { onStats = fn; if (lastStats) fn(lastStats); },
     onSettle(fn) {
       G.onEngineStop(() => {
         // never yank the camera off a search hit to re-frame the whole graph

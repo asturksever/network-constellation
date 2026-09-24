@@ -7,9 +7,7 @@
 import { $, esc, fmt } from './dom.js';
 import { parseCSV } from './csv.js';
 import { deNote, buildGraph, detectColumns, columnsUsable, BuildError } from './build.js';
-import { saveGraph, requestPersistence } from './store.js';
-
-const SAMPLE_URL = 'sample/sample-connections.csv';
+import { saveGraph, requestPersistence, storeProblem } from './store.js';
 
 /** Which column plays which role, in the order the mapper shows them. */
 const ROLES = [
@@ -23,16 +21,32 @@ const ROLES = [
   ['connectedOn', 'Connected on', false]
 ];
 
+/**
+ * The landing page. It knows how to read a file and build a graph from it; it
+ * does not know what else is on the page. main.js tells it two things:
+ *
+ *   setDemo(fn)   — the demo is ready; fn(question?) opens it. Without it the
+ *                   demo buttons are hidden.
+ *   setBack(text) — a graph is already running behind the page; show a way
+ *                   back to it, and let Escape take it.
+ *
+ * `onBuilt(built)` is the fallback for a browser that will not store the
+ * graph: it returns true if it could show the graph without a reload.
+ */
 export function createLanding({ onBuilt } = {}) {
   const el = $('landing');
   const drop = $('dropzone');
   const input = $('csvFile');
   const state = $('landingState');
+  const back = $('landingBack');
 
   let rows = null;
   let columns = null;
   let sourceName = '';
+  let openDemo = null;
+  let accepting = true;     // false in a single-file build that carries its own graph
 
+  const isUp = () => !el.classList.contains('gone');
   const show = () => {
     el.classList.remove('gone');
     document.body.classList.add('landing-up');
@@ -41,6 +55,18 @@ export function createLanding({ onBuilt } = {}) {
     el.classList.add('gone');
     document.body.classList.remove('landing-up');
   };
+
+  function setDemo(fn) {
+    openDemo = fn;
+    el.classList.toggle('no-demo', !fn);
+  }
+
+  function setBack(text) {
+    back.hidden = !text;
+    if (text) back.textContent = text;
+    // with a user's own graph behind the page there is no demo to open from here
+    el.classList.toggle('returning', Boolean(text) && !openDemo);
+  }
 
   const say = (html, kind = '') => {
     state.className = 'landing-state' + (kind ? ' ' + kind : '');
@@ -159,50 +185,87 @@ export function createLanding({ onBuilt } = {}) {
       await requestPersistence();
       await saveGraph({ D: built.D, people: built.people, sourceName });
     } catch (err) {
-      // Worth carrying on: the graph is built, it just will not survive a reload.
+      // The graph is built; this browser just will not keep it. Show it now
+      // if nothing else is running, and say plainly that a reload loses it.
       console.error('Could not keep the graph in this browser.', err);
-      if (onBuilt) { hide(); onBuilt(built); return; }
+      if (await onBuilt?.(built, sourceName)) { hide(); return; }
+      say(
+        `<span class="ls-mono">Built, but this browser would not store it.</span>` +
+        `<span class="ls-note">${esc(storeProblem.message || 'Browser storage is unavailable here.')} ` +
+        `Close other tabs of this page and try again.</span>` +
+        `<button type="button" class="primary" id="buildBtn">Try again</button>`, 'bad');
+      $('buildBtn').addEventListener('click', build);
+      return;
     }
     location.reload();
   }
 
   /* ---- wiring ---- */
 
-  input.addEventListener('change', e => { if (e.target.files[0]) take(e.target.files[0]); });
-
-  drop.addEventListener('click', e => { if (!e.target.closest('button, a')) input.click(); });
-  $('pickFile').addEventListener('click', e => { e.preventDefault(); input.click(); });
-
-  for (const type of ['dragenter', 'dragover']) {
-    drop.addEventListener(type, e => { e.preventDefault(); drop.classList.add('over'); });
-  }
-  for (const type of ['dragleave', 'drop']) {
-    drop.addEventListener(type, e => { e.preventDefault(); drop.classList.remove('over'); });
-  }
-  drop.addEventListener('drop', e => {
-    const file = e.dataTransfer?.files?.[0];
+  // Reset after every pick, or choosing the same file a second time (after
+  // fixing a column, say) fires no change event at all.
+  input.addEventListener('change', e => {
+    const file = e.target.files[0];
+    input.value = '';
     if (file) take(file);
   });
-  // A file dropped anywhere else would otherwise navigate the page away.
-  for (const type of ['dragover', 'drop']) {
-    window.addEventListener(type, e => { if (!drop.contains(e.target)) e.preventDefault(); });
-  }
 
-  $('tryDemo').addEventListener('click', async e => {
+  drop.addEventListener('click', e => { if (!e.target.closest('button, a')) input.click(); });
+  drop.addEventListener('keydown', e => {
+    if (e.target !== drop) return;       // the button inside answers for itself
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+  });
+  $('pickFile').addEventListener('click', e => { e.preventDefault(); input.click(); });
+
+  // The whole page is a drop target, the landing's own zone just says so most
+  // loudly. A file dropped on the running graph opens the landing with it,
+  // rather than being swallowed or navigating the tab away to the raw CSV.
+  let depth = 0;
+  const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
+  addEventListener('dragenter', e => {
+    if (!hasFiles(e)) return;
+    depth++;
+    drop.classList.add('over');
+  });
+  addEventListener('dragleave', e => {
+    if (!hasFiles(e)) return;
+    if (--depth <= 0) { depth = 0; drop.classList.remove('over'); }
+  });
+  addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+  addEventListener('drop', e => {
+    if (!hasFiles(e)) return;
     e.preventDefault();
-    say('<span class="ls-mono">Loading the demo…</span>');
-    try {
-      // The single-file build carries the sample inline; there is no second
-      // file beside it to fetch.
-      if (window.__NC_SAMPLE) { takeText(window.__NC_SAMPLE, 'sample-connections.csv'); return; }
-      const res = await fetch(SAMPLE_URL);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      takeText(await res.text(), 'sample-connections.csv');
-    } catch (err) {
-      say('<span class="ls-mono">Could not load the demo file.</span>', 'bad');
-      console.error(err);
-    }
+    depth = 0;
+    drop.classList.remove('over');
+    const file = e.dataTransfer.files[0];
+    if (!file || !accepting) return;
+    if (!isUp()) show();
+    $('lp-drop')?.scrollIntoView({ block: 'center' });
+    take(file);
   });
 
-  return { show, hide, takeText, pick: () => { show(); input.click(); } };
+  el.addEventListener('scroll', () => el.classList.toggle('scrolled', el.scrollTop > 8), { passive: true });
+
+  // In-page links scroll the landing rather than touching the URL.
+  el.addEventListener('click', e => {
+    const a = e.target.closest('[data-goto]');
+    if (!a) return;
+    e.preventDefault();
+    const target = $(a.dataset.goto);
+    target?.scrollIntoView({ block: a.dataset.goto === 'lp-drop' ? 'center' : 'start' });
+    if (a.dataset.goto === 'lp-drop') drop.focus({ preventScroll: true });
+  });
+
+  $('tryDemo').addEventListener('click', () => openDemo?.());
+  for (const chip of el.querySelectorAll('[data-ask]')) {
+    chip.addEventListener('click', () => openDemo?.(chip.dataset.ask));
+  }
+
+  back.addEventListener('click', hide);
+  addEventListener('keydown', e => {
+    if (e.key === 'Escape' && isUp() && !back.hidden) hide();
+  });
+
+  setDemo(null);
+  return { show, hide, isUp, setDemo, setBack, takeText, setAccept: v => { accepting = v; } };
 }

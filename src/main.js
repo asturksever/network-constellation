@@ -8,12 +8,14 @@ import { wireEnrich } from './enrichui.js';
 import { createDetail } from './detail.js';
 import { renderOverview } from './overview.js';
 import { createLanding } from './upload.js';
-import { peopleFromTuples, hydratePeople } from './build.js';
+import { parseCSV } from './csv.js';
+import { deNote, buildGraph, peopleFromTuples, hydratePeople } from './build.js';
 import { loadGraph, forgetAll, storeProblem } from './store.js';
 import { $ } from './dom.js';
 
 const DATA_URL = 'data/graph-data.json';
 const PEOPLE_URL = 'data/people.json';
+const SAMPLE_URL = 'sample/sample-connections.csv';
 
 /**
  * Where a graph can come from, in order of preference:
@@ -58,35 +60,114 @@ async function findGraph() {
   }
 }
 
-const boot = async () => {
-  const landing = createLanding();
-  const found = await findGraph();
-
-  if (!found) { landing.show(); return; }
-  landing.hide();
-
-  const { D, people } = found;
-
-  // Two ways the scene can fail to exist at all: the graph library did not load
-  // (blocked CDN, offline), or the browser will not give us a WebGL context
-  // (old machine, GPU blocklist, hardware acceleration switched off). Both used
-  // to throw here and leave the page reading "Loading…" for ever.
-  // The WebGL failure surfaces as an async rejection deep inside three.js, so
-  // it has to be found before anything is constructed rather than caught after.
-  let world;
+/**
+ * The demo: 250 invented people, built in this tab from the sample CSV and
+ * never stored, so trying it can never overwrite anyone's own graph. The
+ * single-file build carries the sample inline.
+ */
+async function loadDemo() {
   try {
-    if (typeof ForceGraph3D === 'undefined') {
-      throw new Error('The 3d-force-graph library did not load.');
+    let text = window.__NC_SAMPLE;
+    if (text == null) {
+      const res = await fetch(SAMPLE_URL);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      text = await res.text();
     }
-    if (!hasWebGL()) {
-      throw new Error('This browser could not open a WebGL context.');
+    return buildGraph(parseCSV(deNote(text)), { generatedAt: 'Demo' });
+  } catch (err) {
+    console.warn('The demo could not be loaded.', err);
+    return null;
+  }
+}
+
+/**
+ * Two ways the scene can fail to exist at all: the graph library did not load
+ * (blocked CDN, offline), or the browser will not give us a WebGL context (old
+ * machine, GPU blocklist, hardware acceleration switched off). The WebGL
+ * failure surfaces as an async rejection deep inside three.js, so it has to be
+ * found before anything is constructed rather than caught after.
+ */
+function makeWorld(D, opts = {}) {
+  if (typeof ForceGraph3D === 'undefined') throw new Error('The 3d-force-graph library did not load.');
+  if (!hasWebGL()) throw new Error('This browser could not open a WebGL context.');
+  const world = createConstellation($('scene'), D, { rootLabel: 'You', ...opts });
+  world.PALETTE = PALETTE;
+  return world;
+}
+
+let app = null;        // the running app, once one has started
+let starting = null;   // ...and the promise of it, so two clicks start one
+
+const boot = async () => {
+  let backdrop = null;   // the demo world turning behind the landing, before anyone chooses
+  let onResize = null;
+
+  const landing = createLanding({
+    // This browser would not store a dropped file. Show it anyway, once, as
+    // long as nothing else has been started on this page.
+    onBuilt: async (built, sourceName) => {
+      if (starting) return false;
+      backdrop?.dispose();
+      backdrop = null;
+      if (onResize) removeEventListener('resize', onResize);
+      starting = start({ D: built.D, people: built.people, source: 'memory', sourceName }, landing);
+      return Boolean(await starting);
     }
-    world = createConstellation($('scene'), D, { rootLabel: 'You' });
+  });
+
+  const found = await findGraph();
+  if (found) {
+    landing.hide();
+    starting = start(found, landing);
+    return;
+  }
+
+  // A first visit: the landing, with the demo already turning behind it.
+  landing.show();
+  const demo = await loadDemo();
+  if (!demo || starting) return;          // the landing still works without it
+  try {
+    // 250 people lay out in a few milliseconds, so the demo is settled before
+    // its first frame and can be framed on its real shape straight away.
+    backdrop = makeWorld(demo.D, { warmupTicks: 160 });
   } catch (err) {
     fatal(err);
     return;
   }
-  world.PALETTE = PALETTE;
+  backdrop.apply();
+  backdrop.graph.cameraPosition({ x: 0, y: 0, z: 2400 });
+  setTimeout(() => { if (!starting) backdrop?.frameGraph(1400); }, 60);
+  setTimeout(() => { if (!starting) backdrop?.orbit(true); }, 1500);
+  onResize = () => backdrop?.graph.width(innerWidth).height(innerHeight);
+  addEventListener('resize', onResize);
+
+  // Opening the demo wires the app onto the world that is already turning:
+  // no reload, no second layout, the camera stays where it is.
+  landing.setDemo(async question => {
+    landing.hide();
+    if (!starting) {
+      backdrop.orbit(false);
+      removeEventListener('resize', onResize);
+      starting = start({ ...demo, source: 'demo', sourceName: 'The demo' }, landing, backdrop);
+    }
+    const running = await starting;
+    if (question && running) running.ask.ask(question);
+  });
+};
+
+/** Everything after the world exists: panels, questions, keys, the overview. */
+async function start(found, landing, existing) {
+  const { D, people } = found;
+
+  let world = existing;
+  if (!world) {
+    try {
+      world = makeWorld(D);
+    } catch (err) {
+      fatal(err);
+      return null;
+    }
+  }
 
   const marker = createHighlight($('labels'), world, D);
   const ui = wireUI(world, D, marker);
@@ -130,41 +211,75 @@ const boot = async () => {
 
   wireDataControls(found, landing);
 
-  world.apply();
-  world.graph.cameraPosition({ x: 0, y: 0, z: 2400 });
+  if (!existing) {
+    world.apply();
+    world.graph.cameraPosition({ x: 0, y: 0, z: 2400 });
+  }
 
   $('genDate').textContent = D.generatedAt || '';
 
-  // A blocked database is silent otherwise: the graph still draws from disk
-  // or the bundle, but nothing persists and every Claude read is repaid.
-  if (storeProblem.message) setTimeout(() => ui.say(storeProblem.message), 3000);
+  if (existing) {
+    // this world settled before anyone was listening, so nothing else will say so
+    ui.say(`${people.length} people · click anyone, or ask a question`);
+  }
+  if (found.source === 'memory') {
+    setTimeout(() => ui.say('Showing it once: this browser would not store it'), 1200);
+  } else if (storeProblem.message) {
+    // A blocked database is silent otherwise: the graph still draws, but
+    // nothing persists and every Claude read is paid for again.
+    setTimeout(() => ui.say(storeProblem.message), 3000);
+  }
 
-  // Kept here for the Ask UI to reach without another pass over the data.
-  window.__NC = { world, D, people, ui, marker, detail };
-};
+  app = { world, D, people, ui, marker, detail, ask, source: found.source };
+  window.__NC = app;
+  return app;
+}
 
 /**
  * Replacing a file reloads rather than tearing the world down: wireUI attaches
  * document- and window-level listeners that would stack on a second call, and
  * three.js has a scene graph to dispose of. A reload costs one page load and
- * cannot leak.
+ * cannot leak. The landing is how you get there, with a way back.
  */
 function wireDataControls(found, landing) {
   const hint = $('dataHint');
+  const replace = $('replaceData');
+  const forget = $('forgetData');
+
   if (found.source === 'bundle') {
     $('dataGrp').hidden = true;
+    landing.setAccept(false);
     return;
   }
-  if (hint && found.sourceName) hint.textContent = found.sourceName + ' · this browser only';
 
-  $('replaceData').addEventListener('click', () => landing.pick());
+  const demo = found.source === 'demo';
+  if (!demo) landing.setDemo(null);
+  // nobody should mistake 250 invented people for their own network
+  if (demo) $('ctl').querySelector('.ctl-head h1')?.insertAdjacentHTML('beforeend', ' <span class="demo-tag">Demo</span>');
+  landing.setBack(demo ? 'Back to the demo' : 'Back to your graph');
 
-  $('forgetData').addEventListener('click', async () => {
-    const el = $('forgetData');
-    if (el.dataset.armed !== '1') {
-      el.dataset.armed = '1';
-      el.textContent = 'Erase it?';
-      setTimeout(() => { el.dataset.armed = ''; el.textContent = 'Forget'; }, 4000);
+  // Only a graph kept in this browser can be forgotten from it. One read off
+  // disk, the demo, or one the browser refused to keep has nothing to erase.
+  const kept = found.source === 'browser';
+  forget.hidden = !kept;
+  replace.textContent = demo ? 'Use my connections' : 'Use another file';
+  hint.textContent = {
+    demo: 'The demo: 250 invented people, nothing kept',
+    browser: (found.sourceName || 'Your file') + ' · kept in this browser only',
+    disk: 'Read from data/graph-data.json',
+    memory: 'Not kept: this browser would not store it'
+  }[found.source] || '';
+
+  replace.addEventListener('click', () => {
+    landing.show();
+    $('landing').scrollTop = 0;
+  });
+
+  forget.addEventListener('click', async () => {
+    if (forget.dataset.armed !== '1') {
+      forget.dataset.armed = '1';
+      forget.textContent = 'Erase from this browser?';
+      setTimeout(() => { forget.dataset.armed = ''; forget.textContent = 'Forget'; }, 4000);
       return;
     }
     await forgetAll();
