@@ -39,8 +39,19 @@ export function wireAsk({ world, D, people, ui }) {
   let employers = null;     // employer key -> { hqCity, orgType, ... }
   let inFlight = null;      // AbortController for the question-understanding call
   let touched = false;      // has the user done anything since the answer appeared?
+  let employersSeen = 0;    // bumped whenever the employer map changes...
+  let ranWith = -1;         // ...and what it was when the showing answer ran
 
-  const setEmployers = m => { employers = m; };
+  // New employer records can change an answer (a location or organisation
+  // type now resolves), so the same question must run again, not step.
+  const setEmployers = m => { employers = m; employersSeen++; };
+
+  /** Stop waiting for Claude's reading of a question nobody is looking at any more. */
+  function stopThinking() {
+    inFlight?.abort();
+    inFlight = null;
+    panel.classList.remove('thinking');
+  }
 
   const nodeFor = p => world.nodes[world.PPL0 + p.i];
 
@@ -63,6 +74,7 @@ export function wireAsk({ world, D, people, ui }) {
   }
 
   function clear() {
+    stopThinking();
     unlight();
     panel.hidden = true;
     document.body.classList.remove('answering');
@@ -78,12 +90,13 @@ export function wireAsk({ world, D, people, ui }) {
    * The first answer is never withheld waiting for the second.
    */
   function run(question) {
+    stopThinking();
     const base = resolveQuery(question);
+    ranWith = employersSeen;
     show(base, question);
 
     if (!api.enrichment?.hasKey()) return;
 
-    inFlight?.abort();
     inFlight = new AbortController();
     const controller = inFlight;
     panel.classList.add('thinking');
@@ -99,6 +112,7 @@ export function wireAsk({ world, D, people, ui }) {
       .catch(err => {
         // The regex answer is already on screen, so this is a footnote, not a
         // failure. Auth problems are worth surfacing; the rest are not.
+        if (controller.signal.aborted || err?.code === 'cancelled') return;
         if (err?.code === 'auth') ui.say(err.message);
         console.warn('Question understanding unavailable:', err);
       })
@@ -326,7 +340,7 @@ export function wireAsk({ world, D, people, ui }) {
 
     const q = box.value.trim();
     if (!q) { box.dataset.ran = ''; clear(); return; }
-    if (results.length && q === box.dataset.ran) step(back);
+    if (results.length && q === box.dataset.ran && ranWith === employersSeen) step(back);
     else { box.dataset.ran = q; run(q); }
   }
 

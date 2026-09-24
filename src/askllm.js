@@ -65,7 +65,7 @@ Add nothing that the question does not support. A filter that is too wide is wor
  */
 export async function understandQuestion({ apiKey, model = MODEL_QUESTION, question, signal }) {
   const fake = mock();
-  if (fake) return fake.question ? fake.question(question) : null;
+  if (fake) return fake.question ? fake.question(question, { signal }) : null;
 
   const { data, usage } = await callClaude({
     apiKey,
