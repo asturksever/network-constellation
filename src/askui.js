@@ -38,10 +38,15 @@ export function wireAsk({ world, D, people, ui }) {
   let landed = false;       // has the marker been put on a result yet?
   let employers = null;     // employer key -> { hqCity, orgType, ... }
   let inFlight = null;      // AbortController for the question-understanding call
+  let touched = false;      // has the user done anything since the answer appeared?
 
   const setEmployers = m => { employers = m; };
 
   const nodeFor = p => world.nodes[world.PPL0 + p.i];
+
+  // Orbiting or clicking the scene counts as doing something: a second answer
+  // arriving afterwards must not yank the camera away from where it was put.
+  world.graph.renderer().domElement.addEventListener('pointerdown', () => { touched = true; });
 
   $('askMore').addEventListener('click', () => { shown += PAGE; render(); });
 
@@ -86,7 +91,10 @@ export function wireAsk({ world, D, people, ui }) {
     understandQuestion({ apiKey: api.enrichment.key, question, signal: controller.signal })
       .then(u => {
         if (controller.signal.aborted || box.dataset.ran !== question) return;
-        show(mergeFilter(base, u.ext), question, u.interpretation);
+        // If the user has clicked a result, opened a profile or moved the
+        // camera while Claude was reading, the better answer is drawn in
+        // place: the list and the lit set change, the view and panel do not.
+        show(mergeFilter(base, u.ext), question, u.interpretation, { quiet: touched });
       })
       .catch(err => {
         // The regex answer is already on screen, so this is a footnote, not a
@@ -97,15 +105,17 @@ export function wireAsk({ world, D, people, ui }) {
       .finally(() => { if (!controller.signal.aborted) panel.classList.remove('thinking'); });
   }
 
-  function show(filter, question, interpretation) {
+  function show(filter, question, interpretation, { quiet = false } = {}) {
     const all = runQuery(filter, people, { idf, now: Date.now(), enrich: employers });
     const excluded = all.excludedForLocation || 0;
+    const was = landed ? results[at] : null;
 
     // A node the force simulation has not placed yet cannot be flown to.
     results = all.filter(p => nodeFor(p)?.x !== undefined);
     at = 0;
     shown = PAGE;
     lastFilter = filter;
+    if (!quiet) touched = false;
 
     panel.hidden = false;
     document.body.classList.add('answering');
@@ -131,6 +141,16 @@ export function wireAsk({ world, D, people, ui }) {
     }
 
     emptyEl.hidden = true;
+    if (quiet) {
+      // keep the person the user was on, if the better answer still has them
+      const i = was ? results.findIndex(r => r.i === was.i) : -1;
+      landed = i >= 0;
+      at = Math.max(0, i);
+      if (at >= shown) shown = Math.ceil((at + 1) / PAGE) * PAGE;
+      render();
+      world.setHits(new Set(results.map(nodeFor).filter(Boolean)));
+      return;
+    }
     render();
     light();
   }
@@ -279,6 +299,7 @@ export function wireAsk({ world, D, people, ui }) {
     const node = nodeFor(p);
     if (!node) return;
     landed = true;
+    touched = true;
     // stepping past the drawn rows draws the next page, so the marked row is always visible
     if (at >= shown) { shown = Math.ceil((at + 1) / PAGE) * PAGE; render(); }
     // Stepping through the list while a profile is open closes the profile,
