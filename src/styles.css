@@ -1024,6 +1024,8 @@ body.landing-up #labels { display: none; }
 body.answering #meta { display: none; }
 
 .ans-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.ans-head { position: relative; padding-right: 32px; }
+.ans-head .d-close { position: absolute; top: -4px; right: -8px; }
 .ans-head .lab { margin: 0; }
 #askCount {
   font-family: var(--mono);
@@ -1114,9 +1116,6 @@ body.answering #meta { display: none; }
   border-top: 1px solid var(--hair-2);
 }
 
-@media (max-width: 900px) {
-  #answer { display: none; }
-}
 
 /* The edges caveat sits where the answer panel lands, and while you are reading
    a shortlist the shortlist is the thing that matters. */
@@ -1324,7 +1323,37 @@ body.detailing #answer { display: none; }
 .d-bar-t span { display: block; height: 100%; background: var(--ink-2); opacity: 0.7; }
 .d-bar-n { font-family: var(--mono); font-size: 10px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-@media (max-width: 900px) { #detail { display: none; } }
+/* On a phone the right-hand column becomes a bottom sheet: the answer or the
+   profile over the lower part of the screen, the question box still above it
+   and the lit scene between. Same one-at-a-time rule as the desktop. */
+@media (max-width: 900px) {
+  :root { --sheet-h: 58vh; --sheet-h: 58svh; }
+  #answer, #detail {
+    top: auto; left: 0; right: 0; bottom: 0;
+    width: auto;
+    max-height: var(--sheet-h);
+    border-radius: 18px 18px 0 0;
+    border-bottom: 0;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    animation: nc-sheet-in 320ms var(--ease-out);
+  }
+  /* the grabber: this is a sheet, it came from below */
+  #answer::before, #detail::before {
+    content: "";
+    position: absolute; top: 6px; left: 50%;
+    width: 36px; height: 5px; margin-left: -18px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.22);
+  }
+  body.answering #ctl, body.detailing #ctl { max-height: 30vh; max-height: 30svh; }
+  body.answering #overview, body.detailing #overview { display: none; }
+  body.answering #noteWrap, body.detailing #noteWrap { display: none; }
+  body.answering #status, body.detailing #status { display: none; }   /* the sheet says it */
+}
+@keyframes nc-sheet-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: none; }
+}
 @media (prefers-reduced-motion: reduce) { .d-status, #answer.thinking .aq-lab::after { animation: none; } }
 
 

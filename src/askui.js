@@ -346,16 +346,20 @@ export function wireAsk({ world, D, people, ui }) {
 
   box.addEventListener('search', () => submit(false));
 
+  /** Put the question away: box, answer, lit set and marker. */
+  function dismiss() {
+    box.value = '';
+    box.dataset.ran = '';
+    clear();
+    ui.clearHit();
+  }
+
   box.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); submit(e.shiftKey); return; }
-    if (e.key === 'Escape') {
-      box.value = '';
-      box.dataset.ran = '';
-      clear();
-      ui.clearHit();
-      box.blur();
-    }
+    if (e.key === 'Escape') { dismiss(); box.blur(); }
   });
+  // a phone has no Escape key, and the panel deserves a way out anyway
+  $('answerClose').addEventListener('click', dismiss);
 
   if (degraded) {
     $('askHint').textContent = 'Enter runs · headlines unavailable in this build';

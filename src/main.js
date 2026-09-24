@@ -73,7 +73,10 @@ async function loadDemo() {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       text = await res.text();
     }
-    return buildGraph(parseCSV(deNote(text)), { generatedAt: 'Demo' });
+    // The sample's profile links are made up, and a made-up slug can belong to
+    // a real stranger. The demo has no links at all rather than risk that.
+    const rows = parseCSV(deNote(text)).map(({ URL, ...rest }) => rest);
+    return buildGraph(rows, { generatedAt: 'Demo' });
   } catch (err) {
     console.warn('The demo could not be loaded.', err);
     return null;
