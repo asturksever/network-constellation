@@ -25,18 +25,13 @@ export function wireUI(world, D, hit) {
   });
 
   // Whoever wants to know when a person or employer is clicked or landed on.
-  // The detail panel registers here; without it, a person click opens their
-  // profile as it always did.
+  // The detail panel registers here.
   const hooks = { node: null, landed: null };
 
   world.graph.onNodeClick(n => {
     if ((n.t === 'p' || n.t === 'comp') && hooks.node) {
       if (n.t === 'p') world.flyTo(n, 90);
       hooks.node(n);
-      return;
-    }
-    if (n.t === 'p' && n.slug) {
-      window.open('https://www.linkedin.com/in/' + n.slug + '/', '_blank', 'noopener');
       return;
     }
     if (n.t === 'dom') {

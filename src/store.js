@@ -6,16 +6,15 @@
 // preferences that are not worth a transaction.
 
 const DB_NAME = 'network-constellation';
-// v2 added the per-person reads, v3 the web research. Upgrades only add stores.
+// v2 added per-person headline reads (since removed; an old database keeps
+// its unused 'persons' store), v3 the web research. Upgrades only add stores.
 const DB_VERSION = 3;
 const GRAPH = 'graph';
 const EMPLOYERS = 'employers';
-const PERSONS = 'persons';
 const RESEARCH = 'research';
 const CURRENT = 'current';
 
 export const KEY_STORAGE = 'nc.apiKey';
-export const MODEL_STORAGE = 'nc.model';
 
 let dbPromise = null;
 
@@ -49,7 +48,6 @@ function openAt(version) {
       const db = req.result;
       if (!db.objectStoreNames.contains(GRAPH)) db.createObjectStore(GRAPH);
       if (!db.objectStoreNames.contains(EMPLOYERS)) db.createObjectStore(EMPLOYERS, { keyPath: 'key' });
-      if (!db.objectStoreNames.contains(PERSONS)) db.createObjectStore(PERSONS, { keyPath: 'key' });
       if (!db.objectStoreNames.contains(RESEARCH)) db.createObjectStore(RESEARCH, { keyPath: 'key' });
     };
     // An upgrade waits for every other tab to release the database. Never
@@ -122,10 +120,6 @@ export async function saveGraph({ D, people, sourceName }) {
   });
 }
 
-export async function clearGraph() {
-  await tx(GRAPH, 'readwrite', store => { store.delete(CURRENT); });
-}
-
 /* ---------- employer enrichment ---------- */
 
 export async function allEmployers() {
@@ -144,29 +138,6 @@ export async function putEmployers(records) {
   await tx(EMPLOYERS, 'readwrite', store => {
     for (const r of records) store.put(r);
   });
-}
-
-export async function clearEmployers() {
-  await tx(EMPLOYERS, 'readwrite', store => { store.clear(); });
-}
-
-/* ---------- per-person reads from Claude ---------- */
-/* Keyed by a hash of the text that was sent (role, headline, employer), never
-   by the person's name, so two people with the same headline share one read
-   and a rebuilt file finds its cache again. */
-
-export async function getPerson(key) {
-  try {
-    return await tx(PERSONS, 'readonly', (store, set) => {
-      request(store.get(key)).then(set);
-    });
-  } catch {
-    return null;
-  }
-}
-
-export async function putPerson(record) {
-  await tx(PERSONS, 'readwrite', store => { store.put(record); });
 }
 
 /* ---------- web research briefs ---------- */
@@ -200,8 +171,8 @@ export async function putResearch(record) {
 export async function forgetAll({ wait = 5000 } = {}) {
   try {
     localStorage.removeItem(KEY_STORAGE);
-    localStorage.removeItem(MODEL_STORAGE);
-    localStorage.removeItem('nc.autoPerson');   // from an earlier version
+    localStorage.removeItem('nc.model');        // from earlier versions
+    localStorage.removeItem('nc.autoPerson');
   } catch { /* storage off */ }
   if (dbPromise) {
     try { (await dbPromise).close(); } catch { /* already closed */ }

@@ -10,7 +10,7 @@
 // Links are person->domain and person->employer. They are memberships, NOT
 // relationships between people: LinkedIn does not expose who follows whom.
 
-import { domainHues, seniorityRamp, fade, mix } from './palette.js';
+import { GROUND, domainHues, seniorityRamp, fade, mix } from './palette.js';
 
 export const PALETTE = {
   root: '#f2f6fa',
@@ -171,7 +171,7 @@ export function createConstellation(el, D, opts = {}) {
   };
 
   const G = ForceGraph3D()(el)
-    .backgroundColor('#080b0e')
+    .backgroundColor(GROUND)
     .showNavInfo(false)
     .nodeRelSize(3.4)
     .nodeResolution(6)

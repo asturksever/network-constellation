@@ -5,7 +5,7 @@
 // and sends anything anywhere.
 
 import { $, fmt } from './dom.js';
-import { prefs, KEY_STORAGE, MODEL_STORAGE, allEmployers } from './store.js';
+import { prefs, KEY_STORAGE, allEmployers } from './store.js';
 import { employerList, estimate, enrichEmployers, enrichOne, normKey } from './enrich.js';
 import { LlmError, MODEL_EMPLOYERS } from './llm.js';
 
@@ -116,7 +116,7 @@ export async function wireEnrich({ D, people, onEmployers, say }) {
     try {
       const out = await enrichEmployers({
         apiKey,
-        model: prefs.get(MODEL_STORAGE) || MODEL_EMPLOYERS,
+        model: MODEL_EMPLOYERS,
         jobs,
         signal: controller.signal,
         onProgress,
@@ -150,7 +150,7 @@ export async function wireEnrich({ D, people, onEmployers, say }) {
   async function enrichEmployer(name) {
     const apiKey = keyEl.value.trim();
     if (!apiKey) throw new Error('Paste an API key first.');
-    const record = await enrichOne({ apiKey, model: prefs.get(MODEL_STORAGE) || MODEL_EMPLOYERS, name });
+    const record = await enrichOne({ apiKey, model: MODEL_EMPLOYERS, name });
     if (record) {
       employers.set(record.key, record);
       onEmployers?.(employers);

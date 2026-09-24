@@ -98,9 +98,3 @@ export function pickColumn(row, candidates) {
   }
   return null;
 }
-
-export function toCSV(header, rows) {
-  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  return '﻿' + header.map(q).join(',') + '\r\n' +
-    rows.map(r => r.map(q).join(',')).join('\r\n');
-}

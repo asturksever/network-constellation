@@ -78,7 +78,7 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, enric
       `<span class="d-note">Not labelled yet. ${can
         ? 'One name is sent to Claude; well under a cent.'
         : '<button type="button" class="linky open-settings">Add a key</button> to look it up.'}</span>` +
-      (can ? `<button type="button" class="primary d-label" data-name="${esc(name).replace(/"/g, '&quot;')}">Label ${esc(name)}</button>` : ''));
+      (can ? `<button type="button" class="primary d-label" data-name="${esc(name)}">Label ${esc(name)}</button>` : ''));
   }
 
   function wireLabelButtons() {

@@ -9,7 +9,7 @@
 // from Claude rather than from the regexes.
 
 import { callClaude, MODEL_QUESTION, mock } from './llm.js';
-import { DOMAIN_NAMES, FACETS, mergeFilter } from './ask.js';
+import { DOMAIN_NAMES, FACETS } from './ask.js';
 import { ORG_TYPES, REGIONS } from './enrich.js';
 
 const strings = () => ({ type: 'array', items: { type: 'string' } });
@@ -92,9 +92,4 @@ export async function understandQuestion({ apiKey, model = MODEL_QUESTION, quest
     interpretation: data.interpretation || '',
     usage
   };
-}
-
-/** Convenience: base filter plus whatever Claude read, already validated. */
-export function applyUnderstanding(base, understanding) {
-  return understanding ? mergeFilter(base, understanding.ext) : base;
 }
