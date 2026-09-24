@@ -4,12 +4,17 @@ There is nothing to install. `npm` is a task runner here and the project has no
 dependencies — that is deliberate, and worth keeping.
 
 ```bash
-npm run check    # node --check over every module
-npm test         # node:test, no framework
-npm run dev      # http://localhost:8080
+npm run check        # node --check over every module
+npm test             # node:test, no framework
+npm run bundle:demo  # the single-file build; catches duplicate top-level names
+npm run dev          # http://localhost:8080
+npm run pages        # http://localhost:8090, as GitHub Pages will serve it
 ```
 
-Both run in CI on every push and pull request.
+The first three run in CI on every push and pull request. `npm run pages`
+hides `data/`, `logos/`, `dist/` and `vendor/`, and runs on its own origin, so
+it is the way to see the landing page and the demo on a machine that has a
+real graph on disk.
 
 ## The most useful thing you can change
 
@@ -80,4 +85,8 @@ export dropped in under any name cannot be committed. The one committed CSV is
 `sample/sample-connections.csv`, which is entirely invented people.
 
 If you add anything that sends data anywhere, say so in the README's Privacy
-section in the same change.
+section in the same change, and add its origin to the Content-Security-Policy
+in `index.html`, or the browser will refuse it.
+
+Screenshots in `docs/` are of the demo only: 250 invented people from
+`sample/sample-connections.csv`. Never a real export, not even blurred.

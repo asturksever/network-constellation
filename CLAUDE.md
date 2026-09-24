@@ -11,13 +11,15 @@ with the user's own key.
 ## Run it
 
 ```bash
-npm run data     # data/followers.csv -> data/graph-data.json (+ people.json)
+npm run data     # data/Connections.csv -> data/graph-data.json (+ people.json)
 npm run check    # node --check over every module
 npm test         # node:test
 npm run logos    # fetch employer logos -> logos/  (needs open internet, see below)
 npm run dev      # http://localhost:8080 (scripts/dev-server.mjs, sends no-store)
-npm run bundle   # -> dist/network-constellation.html (single file, for publishing)
-npm run vendor   # optional: local copy of the force-graph lib for offline dev
+npm run pages    # http://localhost:8090 as GitHub Pages serves it: data/ logos/ dist/ vendor/ 404
+npm run bundle   # -> dist/network-constellation.html: YOUR graph inlined, never publish
+npm run bundle:demo  # -> dist/network-constellation-demo.html: landing + demo only, safe to share
+npm run vendor   # optional: vendor/ copy of the force-graph lib, used on localhost when the CDN fails
 ```
 
 There are no dependencies to install. `npm` is used only as a task runner;
@@ -27,10 +29,11 @@ lets the same files run in Node and the browser.
 ## Layout
 
 ```
-index.html            markup + the CDN <script> for 3d-force-graph
+index.html            markup, the landing page, the CSP, and the CDN <script> for 3d-force-graph
 src/taxonomy.js       the classification rules — edit here when a bucket is wrong
 src/classify.js       headline -> {role, company, seniority, domain, domains, tier}
-src/csv.js            dependency-free CSV parse/serialise
+src/csv.js            dependency-free CSV parse; decodeCsv (UTF-8 / windows-1252 / not-a-CSV)
+src/dom.js            $, esc, fmt, sceneRight — shared so no module redeclares them
 src/ask.js            question -> structured filter -> ranked shortlist (see docs/)
 src/palette.js        OKLCH colour generation — the domain hues and seniority ramp
 src/graph.js          node/link model, force-graph setup, camera framing
@@ -39,20 +42,22 @@ src/highlight.js      the search-hit marker: ping, reticle and card, projected t
 src/logos.js          employer logos projected from 3D, sized by headcount
 src/ui.js             control panel, tooltip, status line
 src/askui.js          the question box and its answer panel
-src/enrichui.js       the bring-your-own-key panel and its progress
-src/upload.js         landing state, drop zone, column mapper
+src/enrichui.js       the Settings sheet: the key, employer enrichment and its progress
+src/upload.js         the landing page: drop anywhere, column mapper, build, a way back
 src/build.js          rows -> graph payload; the one path Node and the browser share
-src/store.js          IndexedDB: the built graph, employer records and person reads
+src/store.js          IndexedDB: the built graph, employer records and research briefs
 src/llm.js            raw-fetch Anthropic client (see below for why not the SDK)
 src/enrich.js         employer names -> HQ and organisation type
 src/askllm.js         question -> extra filter constraints
 src/research.js       web research of a person, click-only; the one call that sends a name
 src/overview.js       the network overview at the top of the control panel
-src/detail.js          side panel for people and employer hubs
-src/main.js           boot: find a graph -> build world -> wire UI
+src/detail.js         side panel for people and employer hubs
+src/main.js           boot: a stored/disk graph, or the landing with the demo turning behind it
+scripts/dev-server.mjs     static server with no-store; --bare hides the gitignored dirs
 scripts/build-data.mjs     CSV -> compact graph JSON (a thin wrapper over build.js)
 scripts/fetch-logos.mjs    employer name -> domain -> favicon -> logos/
-scripts/bundle.mjs         flatten everything into one publishable HTML
+scripts/bundle.mjs         flatten everything into one HTML file (--no-data for the demo build)
+docs/                      tutorial.md, install.md, ask-your-graph.md; img/ holds demo-only screenshots
 ```
 
 `src/taxonomy.js`, `src/classify.js` and `src/csv.js` are deliberately free of
@@ -81,6 +86,17 @@ with `--die-with-parent` after every command.
 this looked fine when published and was mojibake for anyone who opened the built
 file off disk. Don't drop it.
 
+**The demo is built in memory and never stored.** On a first visit the sample
+CSV is classified in the tab and its world turns behind the landing; "Explore
+the demo" wires the UI onto that same world (no reload, no second layout). It
+must never reach IndexedDB, or trying the demo would overwrite someone's own
+graph — and it drops the sample's profile URLs, because a made-up LinkedIn slug
+can belong to a real stranger.
+
+**data/ and logos/ are fetched only on localhost** (`LOCAL` in main.js). They
+are gitignored, so anywhere else they are a guaranteed 404 in every visitor's
+console. `npm run pages` is how to look at what the public site does.
+
 **One top-level name per module.** Every module is concatenated into a single
 scope, so two modules declaring the same `const` is a SyntaxError in the bundle
 and perfectly legal in the browser — the failure only appears in the built file.
@@ -107,7 +123,8 @@ output on the 10,144-row headline export after that change.
 - **No geography, on purpose.** Location is absent from the followers feed and
   per-profile only exists after a page renders. Inferring country from names or
   employers was considered and rejected; it would be guesswork wearing a map.
-- **Company is present for ~29% of people.** Extracted by one uniform rule (the
+- **Company is present for ~29% of people in the headline export** (the official
+  export has a Company column for most). Extracted by one uniform rule (the
   capitalised run after "at" or "@") applied to every headline. An earlier
   version matched against a list of well-known brands first and had to be thrown
   away — it inflated big employers and undercounted everyone else. Don't
@@ -211,8 +228,9 @@ question means and their headline will never say "invest".
 
 `data/` is gitignored as a whole directory (with `.gitkeep` re-included), not as
 a list of filenames — a stray export dropped there under any name must not be
-committable. `logos/`, `dist/`, `*.csv`, `*.xlsx`, `*.zip` and `.env` are out
-too. `dist/` matters as much as `data/`: the bundle has the names inlined.
+committable. `logos/`, `dist/`, `vendor/`, `*.csv`, `*.xlsx`, `*.zip` and `.env` are out
+too. `dist/` matters as much as `data/`: `npm run bundle` inlines every name.
+`bundle:demo` is the one build that is safe to hand out.
 
 The history was audited before the repo went to GitHub — no data file, logo or
 session token has ever been committed, so it is safe to flip public.
