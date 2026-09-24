@@ -221,14 +221,14 @@ npm run dev</code></pre>
 
 <div class="panel" id="answer" hidden>
   <div class="ans-head">
-    <span class="ans-count" id="askCount"></span>
+    <span class="ans-count" id="askCount" aria-live="polite" aria-atomic="true"></span>
     <span class="ans-sub" id="askSub"></span>
     <button type="button" class="d-close" id="answerClose" aria-label="Close the answer">&times;</button>
   </div>
   <div id="askQuery"></div>
   <p id="askCaveat" hidden></p>
   <p id="askEmpty" hidden></p>
-  <div id="askList"></div>
+  <div id="askList" role="list" aria-label="People who match"></div>
   <button type="button" class="ans-more" id="askMore" hidden></button>
   <div class="ans-foot">Click someone for their full profile &middot; Enter steps through the list</div>
 </div>
@@ -265,7 +265,7 @@ npm run dev</code></pre>
 </div>
 
 <div id="tip"></div>
-<div id="status">Loading…</div>
+<div id="status" role="status" aria-live="polite">Loading…</div>
 <div id="noteWrap">
   <button type="button" class="icon-btn corner-btn" id="openSettings" aria-label="Settings and API key" title="Settings">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9"/><path d="M17 12v4"/><path d="M20.5 12v3"/></svg>

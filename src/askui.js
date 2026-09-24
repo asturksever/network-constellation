@@ -285,7 +285,7 @@ export function wireAsk({ world, D, people, ui }) {
     const asked = new Set(lastFilter?.subjects || []);
     const tags = (p.why || []).filter(w => !asked.has(w) && !w.includes(' + ') &&
       !(lastFilter?.terms || []).includes(w.toLowerCase()));
-    return `<button type="button" class="ares" data-i="${i}">` +
+    return `<div role="listitem"><button type="button" class="ares" data-i="${i}">` +
       `<span class="ar-avatar" style="--c:${colour}">${esc(initials(p.name))}</span>` +
       `<span class="ar-body">` +
         `<span class="ar-name">${esc(p.name)}</span>` +
@@ -294,7 +294,7 @@ export function wireAsk({ world, D, people, ui }) {
         (tags.length ? `<span class="ar-tags">${tags.map(t => `<span class="ar-tag">${esc(t)}</span>`).join('')}</span>` : '') +
       `</span>` +
       `<span class="ar-go" aria-hidden="true">›</span>` +
-      `</button>`;
+      `</button></div>`;
   }
 
   function mark() {
