@@ -6,7 +6,9 @@
 
 export const fmt = n => n.toLocaleString('en-GB');
 
-export const esc = s =>
-  String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// Safe in text and inside a quoted attribute alike: CSV headers, names and
+// headlines all end up in value="..." or title="..." somewhere.
+const ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ENTITIES[c]);
 
 export const $ = id => document.getElementById(id);
