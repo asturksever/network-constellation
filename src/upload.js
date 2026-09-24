@@ -191,9 +191,16 @@ export function createLanding({ onBuilt } = {}) {
 
   async function build() {
     const btn = $('buildBtn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Classifying…'; }
-    // Let the button repaint before the synchronous classify run.
-    await new Promise(r => setTimeout(r, 16));
+    // Classifying is quick (about 0.1 s for 10,000 people); keeping several
+    // megabytes in IndexedDB and reloading is what takes a moment. Each phase
+    // is named on the button, and the button gets a frame to repaint first.
+    const phase = async text => {
+      if (btn) btn.textContent = text;
+      // a frame to paint in, or 50 ms if the tab is in the background and has none
+      await new Promise(r => { requestAnimationFrame(() => setTimeout(r, 0)); setTimeout(r, 50); });
+    };
+    if (btn) btn.disabled = true;
+    await phase(`Classifying ${fmt(rows.length)} people…`);
 
     let built;
     try {
@@ -207,8 +214,10 @@ export function createLanding({ onBuilt } = {}) {
     }
 
     try {
+      await phase('Keeping it in this browser…');
       await requestPersistence();
       await saveGraph({ D: built.D, people: built.people, sourceName });
+      await phase('Opening…');
     } catch (err) {
       // The graph is built; this browser just will not keep it. Show it now
       // if nothing else is running, and say plainly that a reload loses it.
