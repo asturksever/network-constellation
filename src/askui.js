@@ -12,9 +12,10 @@
 
 import { $, esc, fmt } from './dom.js';
 import { resolveQuery, runQuery, describe, buildIdf, mergeFilter } from './ask.js';
+import { SEN_ORDER } from './taxonomy.js';
 import { understandQuestion } from './askllm.js';
 
-const LIMIT = 12;
+const PAGE = 12;            // rows drawn at a time; "Show more" adds another page
 
 export function wireAsk({ world, D, people, ui }) {
   // Set by main.js once the key panel exists; until then there is simply no key.
@@ -32,6 +33,8 @@ export function wireAsk({ world, D, people, ui }) {
 
   let results = [];
   let at = 0;
+  let shown = PAGE;         // how many rows are drawn
+  let lastFilter = null;    // for highlighting matched words in each row
   let landed = false;       // has the marker been put on a result yet?
   let employers = null;     // employer key -> { hqCity, orgType, ... }
   let inFlight = null;      // AbortController for the question-understanding call
@@ -39,6 +42,8 @@ export function wireAsk({ world, D, people, ui }) {
   const setEmployers = m => { employers = m; };
 
   const nodeFor = p => world.nodes[world.PPL0 + p.i];
+
+  $('askMore').addEventListener('click', () => { shown += PAGE; render(); });
 
   function clear() {
     results = [];
@@ -50,6 +55,8 @@ export function wireAsk({ world, D, people, ui }) {
     listEl.innerHTML = '';
     queryEl.textContent = '';
     countEl.textContent = '';
+    $('askSub').textContent = '';
+    $('askMore').hidden = true;
     emptyEl.hidden = true;
   }
 
@@ -90,14 +97,20 @@ export function wireAsk({ world, D, people, ui }) {
     // A node the force simulation has not placed yet cannot be flown to.
     results = all.filter(p => nodeFor(p)?.x !== undefined);
     at = 0;
+    shown = PAGE;
+    lastFilter = filter;
 
     panel.hidden = false;
     document.body.classList.add('answering');
     queryEl.innerHTML = renderQuery(filter, interpretation);
+    queryEl.title = describe(filter).replace('\n', ' \u00b7 ');
     renderCaveat(filter, excluded);
-    countEl.textContent = results.length
-      ? `${fmt(results.length)} of ${fmt(people.length)}`
-      : `0 of ${fmt(people.length)}`;
+    // The count is the answer, so it is the headline.
+    const pct = people.length ? (results.length / people.length) * 100 : 0;
+    countEl.textContent = results.length === 1 ? '1 person' : `${fmt(results.length)} people`;
+    $('askSub').textContent = results.length
+      ? `${pct < 1 ? '<1' : Math.round(pct)}% of your network`
+      : 'in your network';
 
     if (!results.length) {
       listEl.innerHTML = '';
@@ -133,11 +146,33 @@ export function wireAsk({ world, D, people, ui }) {
     ui.say(`${fmt(results.length)} lit · Enter steps through them`);
   }
 
+  /**
+   * How the question was matched, in plain parts rather than a code line. The
+   * same information describe() prints — kept whole in the tooltip — because a
+   * shortlist you cannot audit is one you cannot trust. Words Claude added are
+   * marked, so they are as visible as the ones taken from the question.
+   */
   function renderQuery(filter, interpretation) {
-    const [line, added] = describe(filter).split('\n');
-    return `<span class="aq-lab">Ran</span><span class="aq-text">${esc(line)}</span>` +
-      (added ? `<span class="aq-added">${esc(added)}</span>` : '') +
-      (interpretation ? `<span class="aq-read">&ldquo;${esc(interpretation)}&rdquo;</span>` : '');
+    const added = new Set([...(filter.added?.terms || []), ...(filter.added?.domains || []), ...(filter.added?.facets || [])]);
+    const mark = x => added.has(x) ? ' aq-claude' : '';
+    const part = (label, values, cls = '') => values.length
+      ? `<div class="aq-row"><span class="aq-k">${label}</span><span class="aq-v">` +
+        values.map(v => `<span class="aq-chip${cls}${mark(v)}">${esc(v)}</span>`).join('') + `</span></div>`
+      : '';
+    const where = filter.location
+      ? [...(filter.location.cities || []), ...(filter.location.countries || []), ...(filter.location.regions || [])].slice(0, 3)
+      : [];
+    const words = filter.terms || [];
+    return (interpretation ? `<p class="aq-read">${esc(interpretation)}</p>` : '') +
+      part('Field', filter.subjects) +
+      part('Role', [...filter.functions, ...filter.facets]) +
+      (filter.minRank != null ? part('Seniority', [`${SEN_ORDER[filter.minRank]} or above`]) : '') +
+      part('Employer', filter.orgTypes || []) +
+      part('Based in', where.map(w => `${w} (employer HQ)`)) +
+      part('Mentions', words.slice(0, 8)) +
+      (added.size ? `<p class="aq-note"><span class="aq-spark">✦</span> added by Claude</p>` : '') +
+      (!filter.subjects.length && !filter.functions.length && !filter.facets.length && !words.length && !where.length
+        ? `<p class="aq-note">No usable signal in the question.</p>` : '');
   }
 
   /**
@@ -166,32 +201,67 @@ export function wireAsk({ world, D, people, ui }) {
   }
 
   function render() {
-    listEl.innerHTML = results.slice(0, LIMIT).map((p, i) => row(p, i)).join('');
+    const n = Math.min(shown, results.length);
+    listEl.innerHTML = results.slice(0, n).map((p, i) => row(p, i)).join('');
     [...listEl.querySelectorAll('.ares')].forEach(el => {
       el.addEventListener('click', () => land(Number(el.dataset.i), false));
     });
+    const more = $('askMore');
+    const left = results.length - n;
+    more.hidden = left <= 0;
+    more.textContent = left > 0 ? `Show ${fmt(Math.min(PAGE, left))} more · ${fmt(left)} left` : '';
     mark();
   }
 
+  /** Wrap the question's words where they occur, so a row shows why it matched. */
+  function highlight(text) {
+    const words = (lastFilter?.terms || []).filter(w => w.length > 2)
+      .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    if (!words.length || !text) return esc(text || '');
+    const re = new RegExp(`\\b(${words.join('|')})\\w*`, 'gi');
+    let out = '', last = 0, m;
+    while ((m = re.exec(text)) !== null) {
+      out += esc(text.slice(last, m.index)) + `<mark>${esc(m[0])}</mark>`;
+      last = m.index + m[0].length;
+    }
+    return out + esc(text.slice(last));
+  }
+
+  const initials = name => (name || '?').split(/\s+/).filter(Boolean).slice(0, 2)
+    .map(w => w[0].toUpperCase()).join('');
+
   function row(p, i) {
-    const company = p.company || '';
-    // For a lot of people the headline IS the role, and printing it twice makes
-    // the row look padded. Only show it when it adds something.
-    const head = p.headline && !degraded && !p.headline.startsWith(p.role) ? p.headline : '';
-    const why = (p.why || []).map(w => `<span class="why">${esc(w)}</span>`).join('');
-    return `<button type="button" class="ares" data-i="${i}">
-      <span class="ar-top"><span class="ar-name">${esc(p.name)}</span>` +
-      (p.role ? `<span class="ar-role">${esc(p.role)}</span>` : '') + `</span>` +
-      (company ? `<span class="ar-co">${esc(company)}</span>` : '') +
-      (head ? `<span class="ar-head">${esc(head)}</span>` : '') +
-      (why ? `<span class="ar-why">${why}</span>` : '') +
+    const di = D.doms.indexOf(p.domain);
+    const colour = di >= 0 ? world.domColor[di] : '#636366';
+    const subtitle = [p.role, p.company].filter(Boolean).join(' · ');
+    // The role is usually the headline's first clause; show whatever the
+    // headline adds beyond it, which is often where the matched words are.
+    let head = !degraded && p.headline ? p.headline : '';
+    if (head && p.role && head.startsWith(p.role)) head = head.slice(p.role.length).replace(/^[\s|•·,@–—-]+/, '');
+    if (head && p.company && head.replace(/^at\s+/i, '').trim() === p.company) head = '';
+    // Only the reasons that say something the question did not: the field the
+    // question asked for, and the words already highlighted, are dropped.
+    const asked = new Set(lastFilter?.subjects || []);
+    const tags = (p.why || []).filter(w => !asked.has(w) && !w.includes(' + ') &&
+      !(lastFilter?.terms || []).includes(w.toLowerCase()));
+    return `<button type="button" class="ares" data-i="${i}">` +
+      `<span class="ar-avatar" style="--c:${colour}">${esc(initials(p.name))}</span>` +
+      `<span class="ar-body">` +
+        `<span class="ar-name">${esc(p.name)}</span>` +
+        (subtitle ? `<span class="ar-sub">${highlight(subtitle)}</span>` : '') +
+        (head ? `<span class="ar-head">${highlight(head)}</span>` : '') +
+        (tags.length ? `<span class="ar-tags">${tags.map(t => `<span class="ar-tag">${esc(t)}</span>`).join('')}</span>` : '') +
+      `</span>` +
+      `<span class="ar-go" aria-hidden="true">›</span>` +
       `</button>`;
   }
 
   function mark() {
     [...listEl.querySelectorAll('.ares')].forEach((el, i) => {
-      el.classList.toggle('on', i === at);
+      el.classList.toggle('on', landed && i === at);
     });
+    const on = listEl.querySelector('.ares.on');
+    if (on) on.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   /** `auto` is a landing nobody chose (Enter-stepping); a click is not. */
@@ -202,6 +272,8 @@ export function wireAsk({ world, D, people, ui }) {
     const node = nodeFor(p);
     if (!node) return;
     landed = true;
+    // stepping past the drawn rows draws the next page, so the marked row is always visible
+    if (at >= shown) { shown = Math.ceil((at + 1) / PAGE) * PAGE; render(); }
     // Stepping through the list while a profile is open closes the profile,
     // which brings the answer back into view; a click opens the next one.
     if (auto) api.detail?.close?.();

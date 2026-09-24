@@ -1329,3 +1329,91 @@ body.sheet-up { overflow: hidden; }
 .de-sources a { color: var(--s1); text-decoration: none; }
 .de-sources a:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .de-track span { animation: none; width: 100%; opacity: 0.5; } }
+
+/* ---------- the answer panel, readable ---------- */
+/* The count leads, the matching reads as plain parts, and each row is a
+   person: an initial in their field's colour, name, role and employer, the
+   headline with the question's words marked, and only the reasons that say
+   something new. */
+
+#answer { gap: 12px; padding: 16px 16px 12px; }
+.ans-head { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+#askCount.ans-count { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.ans-sub { font-size: 12px; color: var(--muted); }
+
+#askQuery {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 12px;
+  background: var(--fill-2);
+  border: 0;
+  border-radius: 10px;
+}
+.aq-read { margin: 0 0 2px; font-size: 13px; line-height: 1.45; color: var(--ink); }
+.aq-row { display: grid; grid-template-columns: 70px 1fr; gap: 8px; align-items: baseline; }
+.aq-k { font-size: 11px; color: var(--muted); }
+.aq-v { display: flex; flex-wrap: wrap; gap: 4px; }
+.aq-chip { font-size: 11.5px; color: var(--ink); background: var(--fill); border-radius: 999px; padding: 2px 8px; }
+.aq-claude { color: #9ccfff; background: rgba(10, 132, 255, 0.16); }
+.aq-claude::before { content: "\2726  "; font-size: 9px; }
+.aq-note { margin: 0; font-size: 11px; color: var(--muted); }
+.aq-spark { color: #9ccfff; }
+
+#askList {
+  gap: 2px;
+  /* a soft fade where the list runs under the edge, not a hard line */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+  padding-bottom: 14px;
+}
+.ares {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 12px;
+  gap: 11px;
+  align-items: start;
+  padding: 10px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+}
+.ares:hover { background: var(--fill-2); }
+.ares.on { background: rgba(10, 132, 255, 0.14); border: 0; }
+.ar-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+  color: #fff;
+  background: color-mix(in oklab, var(--c) 55%, #1c1c1e);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--c) 70%, transparent);
+}
+.ar-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ar-name { font-size: 13.5px; font-weight: 600; color: var(--ink); line-height: 1.3; }
+.ar-sub { font-size: 12px; color: var(--ink-2); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ar-head {
+  font-size: 12px; color: var(--muted); line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ares mark { background: rgba(255, 209, 102, 0.16); color: var(--ink); border-radius: 3px; padding: 0 2px; }
+.ar-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.ar-tag { font-size: 11px; color: var(--ink-2); background: var(--fill-2); border-radius: 999px; padding: 1px 8px; }
+.ar-go { align-self: center; font-size: 18px; line-height: 1; color: var(--muted); opacity: 0; transition: opacity 150ms ease-out; }
+.ares:hover .ar-go, .ares.on .ar-go { opacity: 1; }
+
+.ans-more {
+  align-self: center;
+  font: inherit; font-size: 12.5px; font-weight: 500;
+  color: var(--s1);
+  background: rgba(10, 132, 255, 0.12);
+  border: 0; border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.ans-more:hover { background: rgba(10, 132, 255, 0.2); }
+.ans-foot {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+  padding-top: 8px;
+}
