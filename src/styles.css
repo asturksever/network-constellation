@@ -23,9 +23,10 @@
 
   --ink: #f5f5f7;
   --ink-2: #b0b0b6;
-  --muted: #98989f;
+  --muted: #a1a1a8;                          /* ≥ 5.2:1 on every surface, incl. input fills */
 
-  --s1: #0a84ff;                             /* the one accent */
+  --s1: #0a84ff;                             /* the one accent: links, marks, rings (4.9:1 on panels) */
+  --s1-fill: #0071e3;                        /* the accent as a fill under white text (4.7:1) */
   --s2: #ff9f0a;                             /* the caveat rule */
   --hit-gold: #ffd166;
 
@@ -688,16 +689,17 @@ body.answering #noteWrap, body.detailing #noteWrap { right: 398px; }
   display: inline-flex; align-items: center; justify-content: center;
   font: 600 15px/1 var(--sans);
   color: #fff;
-  background: var(--s1);
+  background: var(--s1-fill);
   border: 0; border-radius: 999px;
   padding: 14px 22px;
   text-decoration: none;
   cursor: pointer;
-  transition: filter 150ms ease-out, background 150ms ease-out, transform 100ms ease-out;
+  transition: box-shadow 150ms ease-out, background 150ms ease-out, transform 100ms ease-out;
 }
-.lp-btn:hover { filter: brightness(1.12); }
+/* hover rings rather than brightens: a lighter blue under white text fails AA */
+.lp-btn:hover { box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.28); }
 .lp-btn.ghost { background: var(--fill); color: var(--ink); }
-.lp-btn.ghost:hover { background: rgba(120, 120, 128, 0.34); filter: none; }
+.lp-btn.ghost:hover { background: rgba(120, 120, 128, 0.34); box-shadow: none; }
 
 .lp-asks { margin-top: 40px; }
 .lp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 12px; }
@@ -983,14 +985,14 @@ body.answering #noteWrap, body.detailing #noteWrap { right: 398px; }
   letter-spacing: 0;
   text-transform: none;
   color: #fff;
-  background: var(--s1);
+  background: var(--s1-fill);
   border: 0;
   border-radius: 999px;
   padding: 9px 16px;
   cursor: pointer;
-  transition: filter 150ms ease-out, transform 100ms ease-out;
+  transition: box-shadow 150ms ease-out, transform 100ms ease-out;
 }
-.primary:hover { filter: brightness(1.12); }
+.primary:hover { box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.28); }
 .primary:disabled { background: var(--fill); color: var(--muted); cursor: not-allowed; filter: none; }
 
 #dataGrp .seg button { cursor: pointer; }
