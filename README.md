@@ -59,7 +59,7 @@ With your own Anthropic key, **three things can be sent to Anthropic, and
 nothing else**:
 
 1. **Employer names**, to look up headquarters and organisation type. Sent when
-   you press **Enrich employers**, or **Label** on an employer.
+   you press **Look up employers** in Settings, or **Label** on one employer.
 2. **The text of your questions**, each one you ask while a key is set, so
    Claude can read it more closely. Anything it adds is marked in the answer.
 3. **One person's name, headline and employer**, only when you press **Enrich

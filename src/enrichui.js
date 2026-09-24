@@ -9,7 +9,7 @@ import { prefs, KEY_STORAGE, allEmployers } from './store.js';
 import { employerList, estimate, enrichEmployers, enrichOne, normKey } from './enrich.js';
 import { LlmError, MODEL_EMPLOYERS } from './llm.js';
 
-export async function wireEnrich({ D, people, onEmployers, onKeyChange, say }) {
+export async function wireEnrich({ D, people, onEmployers, onKeyChange, onKeyReady, say }) {
   const keyEl = $('apiKey');
   const rememberEl = $('rememberKey');
   const runEl = $('enrichRun');
@@ -28,27 +28,64 @@ export async function wireEnrich({ D, people, onEmployers, onKeyChange, say }) {
   /* ---- the settings sheet ---- */
   const sheet = $('settings');
   const openBtn = $('openSettings');
-  // Panels drawn before a key existed say "add your API key"; when the sheet
-  // closes with a key newly added (or removed), they are told to redraw.
+  // Two ways in. The key button opens everything. "Add your API key" on a
+  // person or an employer opens only the key, with one button that says what
+  // happens next ("Save and enrich Freya") — so the bulk employer lookup is
+  // never the obvious next click for someone who came to enrich one person.
   let hadKey = false;
-  const openSheet = () => {
+  let then = null;          // { action, label, why } for a key-only opening
+  const keySave = $('keySave');
+  const keyWhy = $('keyWhy');
+  const defaultWhy = keyWhy.innerHTML;
+
+  const openSheet = (ctx = null) => {
     hadKey = Boolean(keyEl.value.trim());
+    then = ctx;
+    sheet.classList.toggle('key-only', Boolean(ctx));
+    $('settingsTitle').textContent = ctx ? 'Add your API key' : 'Settings';
+    keySave.hidden = !ctx;
+    if (ctx) {
+      keySave.textContent = ctx.label;
+      keyWhy.textContent = ctx.why;
+    } else {
+      keyWhy.innerHTML = defaultWhy;
+    }
     sheet.hidden = false;
     document.body.classList.add('sheet-up');
-    setTimeout(() => (keyEl.value ? $('enrichRun') : keyEl)?.focus(), 60);
+    setTimeout(() => (ctx || !keyEl.value ? keyEl : $('enrichRun'))?.focus(), 60);
   };
   const closeSheet = () => {
     sheet.hidden = true;
+    sheet.classList.remove('key-only');
     document.body.classList.remove('sheet-up');
     openBtn?.focus();
+    // Panels drawn before a key existed say "add your API key": redraw them.
     if (Boolean(keyEl.value.trim()) !== hadKey) onKeyChange?.();
   };
-  openBtn?.addEventListener('click', openSheet);
+  openBtn?.addEventListener('click', () => openSheet());
   $('settingsClose')?.addEventListener('click', closeSheet);
   $('settingsScrim')?.addEventListener('click', closeSheet);
   addEventListener('keydown', e => { if (e.key === 'Escape' && !sheet.hidden) closeSheet(); });
-  // any "add a key" link anywhere on the page opens the same sheet
-  document.addEventListener('click', e => { if (e.target.closest('.open-settings')) openSheet(); });
+
+  // Any "add a key" link on the page opens the sheet; one that names what it
+  // was for (data-then) opens it key-only, and runs that once the key is in.
+  document.addEventListener('click', e => {
+    const link = e.target.closest('.open-settings');
+    if (!link) return;
+    const { then: action, label, why } = link.dataset;
+    openSheet(action ? { action, label: label || 'Save key', why: why || '' } : null);
+  });
+
+  keySave.addEventListener('click', () => {
+    const key = keyEl.value.trim();
+    if (!key) { keyEl.focus(); say?.('Paste an API key first'); return; }
+    if (rememberEl.checked) prefs.set(KEY_STORAGE, key);
+    const action = then?.action;
+    closeSheet();
+    if (action) onKeyReady?.(action);
+  });
+  keyEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !keySave.hidden) keySave.click(); });
+
   const markKey = () => openBtn?.classList.toggle('has-key', Boolean(keyEl.value.trim()));
   keyEl.addEventListener('input', markKey);
 
@@ -74,7 +111,7 @@ export async function wireEnrich({ D, people, onEmployers, onKeyChange, say }) {
       ? `~$${est.dollars.toFixed(2)} · ~${est.seconds < 90 ? est.seconds + 's' : Math.round(est.seconds / 60) + ' min'}`
       : '';
     runEl.disabled = todo.length === 0;
-    runEl.textContent = todo.length ? `Enrich ${fmt(todo.length)} employers` : 'Nothing to enrich';
+    runEl.textContent = todo.length ? `Look up ${fmt(todo.length)} employers` : 'All employers looked up';
     knownEl.textContent = employers.size
       ? `${fmt(employers.size)} employers already labelled, kept in this browser.`
       : '';
@@ -110,6 +147,7 @@ export async function wireEnrich({ D, people, onEmployers, onKeyChange, say }) {
     controller = new AbortController();
     runEl.disabled = true;
     progressEl.hidden = false;
+    cancelEl.hidden = false;
     barEl.style.width = '0%';
     statEl.textContent = `0 / ${fmt(jobs.length)}`;
 
@@ -144,7 +182,8 @@ export async function wireEnrich({ D, people, onEmployers, onKeyChange, say }) {
       console.error(err);
     } finally {
       controller = null;
-      progressEl.hidden = false;
+      progressEl.hidden = false;     // the result stays; there is nothing left to cancel
+      cancelEl.hidden = true;
       refresh();
     }
   });

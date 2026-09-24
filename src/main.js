@@ -216,7 +216,9 @@ async function start(found, landing, existing) {
     D, people, say: ui.say,
     onEmployers: m => ask.setEmployers(m),
     // an open profile drawn before the key existed still says "add your key"
-    onKeyChange: () => detail?.rerender()
+    onKeyChange: () => detail?.rerender(),
+    // "Save and enrich Freya": the one action the key was added for
+    onKeyReady: action => detail?.runAfterKey(action)
   });
   ask.enrichment = enrichment;
 

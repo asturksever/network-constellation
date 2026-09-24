@@ -77,7 +77,9 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, enric
     return sec('Employer',
       `<span class="d-note">Not labelled yet. ${can
         ? 'One name is sent to Claude; well under a cent.'
-        : '<button type="button" class="linky open-settings">Add a key</button> to look it up.'}</span>` +
+        : `<button type="button" class="linky open-settings" data-then="label-employer" ` +
+          `data-label="Save and look up ${esc(name)}" ` +
+          `data-why="Looking up ${esc(name)} sends only the employer’s name to Anthropic, no people. Well under a cent, saved afterwards.">Add a key</button> to look it up.`}</span>` +
       (can ? `<button type="button" class="primary d-label" data-name="${esc(name)}">Label ${esc(name)}</button>` : ''));
   }
 
@@ -204,7 +206,9 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, enric
       el.innerHTML =
         `<div class="de-head">${SPARK}<span>Enrich this profile</span></div>` +
         `<p class="de-lead">Get a short brief on who ${esc(firstName(p))} is, what they work on and how to open a conversation, written by Claude from the public web.</p>` +
-        `<button type="button" class="primary de-btn open-settings">Add your API key to start</button>`;
+        `<button type="button" class="primary de-btn open-settings" data-then="enrich-person" ` +
+          `data-label="Save and enrich ${esc(firstName(p))}" ` +
+          `data-why="Enriching ${esc(firstName(p))} sends their name, headline and employer to Anthropic, which searches the public web and writes a short brief. About $0.10–$0.30, saved afterwards. Nothing else is sent.">Add your API key to start</button>`;
       return;
     }
     el.innerHTML =
@@ -401,6 +405,20 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, enric
     },
     close,
     rerender,
+    /**
+     * Run what an "add your key" button was pressed for, once the key is in:
+     * enrich the person on the panel, or look up the employer on it. Only
+     * ever called from the key sheet's own button, which names the action.
+     */
+    runAfterKey(action) {
+      if (!current || panel.hidden) return;
+      if (action === 'enrich-person' && current.kind === 'person') {
+        const el = $('dResearch');
+        if (el) fetchResearch(current.p, el, false);
+      } else if (action === 'label-employer') {
+        body.querySelector('.d-label')?.click();
+      }
+    },
     get open() { return !panel.hidden; }
   };
 }

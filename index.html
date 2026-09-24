@@ -241,25 +241,31 @@ npm run dev</code></pre>
       <button type="button" class="d-close" id="settingsClose" aria-label="Close">&times;</button>
     </div>
     <div class="sheet-body">
-    <div class="enrich-body">
-      <p class="ehelp">Your export has no location and no company type, so &ldquo;any VC in SF?&rdquo; can&rsquo;t be answered from it. With a key, Claude labels employers with headquarters and organisation type, and can enrich a person&rsquo;s profile from the public web when you ask.</p>
+    <section class="enrich-body" id="keySection" aria-labelledby="keyHead">
+      <h2 class="sheet-h" id="keyHead">Your API key</h2>
+      <p class="ehelp" id="keyWhy">Everything so far works without one. With a key, Claude can place employers, read your questions more closely and research a person on the public web &mdash; each only when you ask.</p>
       <label class="elab" for="apiKey">Anthropic API key</label>
       <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
       <label class="chk"><input type="checkbox" id="rememberKey"> Remember on this device</label>
+      <button type="button" class="primary" id="keySave" hidden>Save key</button>
       <p class="ehelp small">Sent to Anthropic: employer names and the text of your questions. A person&rsquo;s name, headline and employer only when you press <em>Enrich profile</em> on their panel. Never emails or profile links. Everything is saved in this browser, so nothing is paid for twice. Use a key with a spend limit.</p>
-      <span class="lab">Scope</span>
-      <div class="seg" id="scopeSeg" role="group" aria-label="Enrichment scope">
-        <button type="button" data-scope="hubs" aria-pressed="true">Hubs</button>
+    </section>
+    <section class="enrich-body" id="employerSection" aria-labelledby="empHead">
+      <h2 class="sheet-h" id="empHead">Where employers are based</h2>
+      <p class="ehelp">Your export has no location and no company type, so &ldquo;any VC in SF?&rdquo; can&rsquo;t be answered from it. This looks up every employer at once &mdash; company names only, no people &mdash; so location questions work. It is separate from enriching a person.</p>
+      <span class="lab">Which employers</span>
+      <div class="seg" id="scopeSeg" role="group" aria-label="Which employers">
+        <button type="button" data-scope="hubs" aria-pressed="true">Shared by 2+</button>
         <button type="button" data-scope="all" aria-pressed="false">All</button>
       </div>
       <div class="erow"><span id="scopeCount">—</span><span id="scopeCost">—</span></div>
-      <button type="button" class="primary" id="enrichRun">Enrich employers</button>
+      <button type="button" class="primary" id="enrichRun">Look up employers</button>
       <div id="enrichProgress" hidden>
         <div class="ebar"><span id="enrichBarFill"></span></div>
         <div class="erow"><span id="enrichStat">—</span><button type="button" class="linky" id="enrichCancel">Cancel</button></div>
       </div>
       <p class="ehelp small" id="enrichKnown"></p>
-    </div>
+    </section>
     </div>
   </div>
 </div>

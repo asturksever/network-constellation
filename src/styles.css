@@ -1169,6 +1169,7 @@ body.answering #meta { display: none; }
 .ebar { height: 6px; border-radius: 2px; background: var(--hair-2); overflow: hidden; }
 .ebar span { display: block; height: 100%; width: 0; background: var(--hit-gold); transition: width 0.25s; }
 #enrichProgress { display: flex; flex-direction: column; gap: 7px; }
+#enrichProgress[hidden] { display: none; }
 
 /* the location caveat, in the answer */
 #askCaveat {
@@ -1410,6 +1411,18 @@ body.detailing #answer { display: none; }
 }
 .sheet-body { margin-top: 6px; }
 .sheet-body .enrich-body { padding: 0; }
+.sheet-body .enrich-body + .enrich-body { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hair-2); }
+.sheet-h {
+  margin: 0 0 2px;
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+/* Arriving from one person or one employer: only the key, and that one action. */
+#settings.key-only #employerSection,
+#settings.key-only #keyHead { display: none; }
 body.sheet-up { overflow: hidden; }
 
 @keyframes nc-fade { from { opacity: 0; } to { opacity: 1; } }

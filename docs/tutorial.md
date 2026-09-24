@@ -20,7 +20,7 @@ Firefox or Safari. Phones work too; see [the end](#on-a-phone).
 8. [Open a profile](#8-open-a-profile)
 9. [Add an API key](#9-add-an-api-key-optional)
 10. [Enrich a profile](#10-enrich-a-profile)
-11. [Enrich employers, then ask about a place](#11-enrich-employers-then-ask-about-a-place)
+11. [Look up employers, then ask about a place](#11-look-up-employers-then-ask-about-a-place)
 12. [Your data: replacing and forgetting it](#12-your-data)
 
 ---
@@ -181,6 +181,12 @@ Open **Settings** with the key button at the bottom right and paste a key from
 **Remember on this device** only if you want the key kept in this browser. Use a
 key with a spend limit.
 
+Settings has two parts: **Your API key**, and **Where employers are based**,
+which looks up all your employers at once (step 11). They are separate. If you
+came from **Add your API key to start** on a person's panel, the sheet shows
+only the key, and one button: **Save and enrich** that person. Nothing else
+runs.
+
 The key is sent only to Anthropic, straight from your browser. What else goes
 with it is listed in the panel and in the README's [privacy section](../README.md#privacy).
 
@@ -205,13 +211,14 @@ could be matched with confidence, so nothing is attributed to them. On a real
 person, a namesake is the failure to watch for. The prompt treats a confident
 brief about the wrong person as the worst possible outcome.
 
-## 11. Enrich employers, then ask about a place
+## 11. Look up employers, then ask about a place
 
-![Asking "any VC based in London?" after the employers were enriched](img/location.png)
+![Asking "any VC based in London?" after the employers were looked up](img/location.png)
 
-In **Settings**, choose a **scope**. **Hubs** covers the employers two or more
-people share, and costs about $0.06 for a 10,000-person network. **All**
-covers every employer named, about $0.70. Then press **Enrich employers**.
+In **Settings → Where employers are based**, choose which employers. **Shared
+by 2+** covers the employers two or more people share, and costs about $0.06
+for a 10,000-person network. **All** covers every employer named, about $0.70.
+Then press **Look up employers**. Only company names are sent, never people.
 Results are saved in this browser, so nothing is paid for twice. **Cancel**
 keeps whatever has already been done.
 
