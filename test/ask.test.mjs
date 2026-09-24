@@ -91,3 +91,14 @@ test('a question with no signal returns nobody, not everybody', () => {
   // a word that does appear still finds its person
   assert.deepEqual(runQuery(resolveQuery('anyone doing bathymetry'), people).map(p => p.name), ['B']);
 });
+
+test('a place in the question is a gate, not also a word to mention', () => {
+  const f = resolveQuery('any VC based in London?');
+  assert.deepEqual(f.location.cities, ['London']);
+  assert.ok(!f.terms.includes('london'), `terms were ${f.terms}`);
+  const g = resolveQuery('anyone working in San Francisco on robotics');
+  assert.deepEqual(g.location.cities, ['San Francisco'], 'the place stops where the sentence moves on');
+  assert.ok(!g.terms.includes('san') && !g.terms.includes('francisco'), `terms were ${g.terms}`);
+  assert.ok(g.terms.some(t => t.startsWith('robot')), `terms were ${g.terms}`);
+  assert.deepEqual(resolveQuery('founders based in New York City').location.cities, ['New York City']);
+});

@@ -103,7 +103,7 @@ export function wireAsk({ world, D, people, ui }) {
 
     understandQuestion({ apiKey: api.enrichment.key, question, signal: controller.signal })
       .then(u => {
-        if (controller.signal.aborted || box.dataset.ran !== question) return;
+        if (!u || controller.signal.aborted || box.dataset.ran !== question) return;
         // If the user has clicked a result, opened a profile or moved the
         // camera while Claude was reading, the better answer is drawn in
         // place: the list and the lit set change, the view and panel do not.
@@ -180,7 +180,7 @@ export function wireAsk({ world, D, people, ui }) {
     const nodes = new Set(results.map(nodeFor).filter(Boolean));
     // people hidden by the density control cannot light up; put them back first
     const restored = results.some(p => !world.isVisible(nodeFor(p))) && ui.showEveryone();
-    world.setHit(null);
+    ui.clearHit();            // the last person's marker belongs to the last answer
     world.setHits(nodes);
     const frame = () => world.frameNodes([...nodes]);
     if (restored) setTimeout(frame, 450); else frame();

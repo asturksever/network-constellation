@@ -110,14 +110,18 @@ export function resolveQuery(question) {
     if (hits(SENIORITY[i][1])) { minRank = SEN_ORDER.indexOf(SENIORITY[i][0]); break; }
   }
 
-  // leftover words carry the specifics the taxonomy has no bucket for
-  const terms = [...new Set(norm.split(' ').filter(w => w.length > 2 && !STOP.has(w)))];
+  // Noticed without a key; the UI says location needs enrichment rather than
+  // pretending the constraint was applied.
+  const location = locationHint(question);
+
+  // leftover words carry the specifics the taxonomy has no bucket for — but
+  // not the place, which is a gate of its own, not something to mention
+  const terms = withoutPlace(
+    [...new Set(norm.split(' ').filter(w => w.length > 2 && !STOP.has(w)))], location);
 
   return {
     question, domains, subjects, functions, facets, minRank, terms,
-    // Noticed without a key; the UI says location needs enrichment rather than
-    // pretending the constraint was applied.
-    location: locationHint(question),
+    location,
     orgTypes: [],
     added: { domains: [], facets: [], terms: [] }
   };
@@ -317,12 +321,32 @@ export function matchesLocation(e, loc) {
 const LOCATION_CUE =
   /\b(?:based|located|headquartered|hq|sitting|working)\s+(?:in|near|around|out of)\s+([\p{L}][\p{L}.'-]*(?:[ ][\p{L}][\p{L}.'-]*){0,2})/iu;
 
+// A place name runs until the sentence moves on: "based in London working on
+// maps" is London, not "London working on".
+const PLACE_ENDS = new Set(('on in at for with who whose that which and or but to from doing working ' +
+  'building making selling focused focusing near around like').split(' '));
+
 export function locationHint(question) {
   const m = question.match(LOCATION_CUE);
   if (!m) return null;
-  const place = m[1].trim().replace(/[.,?!]+$/, '');
+  const words = m[1].trim().replace(/[.,?!]+$/, '').split(/\s+/);
+  const end = words.findIndex((w, i) => i > 0 && PLACE_ENDS.has(w.toLowerCase()));
+  const place = (end < 0 ? words : words.slice(0, end)).join(' ').replace(/[.,?!]+$/, '');
   if (!place) return null;
   return { cities: [place], countries: [], countryCodes: [], regions: [], source: 'hint' };
+}
+
+/**
+ * Words swallowed by a place must not also be scored as free text, or the
+ * readout says "mentions san, francisco" about people in neither.
+ */
+function withoutPlace(terms, location) {
+  if (!location) return terms;
+  const placeWords = new Set(
+    [...(location.cities || []), ...(location.countries || []), ...(location.regions || [])]
+      .flatMap(v => String(v).toLowerCase().split(/\s+/))
+  );
+  return terms.filter(t => !placeWords.has(t));
 }
 
 /**
@@ -347,13 +371,7 @@ export function mergeFilter(base, ext = {}) {
     ext.location.countryCodes?.length || ext.location.regions?.length
   ) ? { ...ext.location, source: 'llm' } : base.location || null;
 
-  // Words swallowed by a place must not also be scored as free text, or the
-  // readout says "mentions san, francisco" about people in neither.
-  const placeWords = new Set(
-    [...(location?.cities || []), ...(location?.countries || []), ...(location?.regions || [])]
-      .flatMap(v => String(v).toLowerCase().split(/\s+/))
-  );
-  const terms = [...base.terms, ...addedTerms].filter(t => !placeWords.has(t));
+  const terms = withoutPlace([...base.terms, ...addedTerms], location);
 
   return {
     ...base,
