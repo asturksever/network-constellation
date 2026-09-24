@@ -9,13 +9,38 @@ import { SEN_ORDER } from './taxonomy.js';
 
 const monthYear = t => new Date(t).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
 
+/**
+ * The numbers the overview shows, apart from the drawing: totals, the three
+ * largest stated seniority bands, the three largest placed fields with their
+ * share, and the span of connection dates when the export carried them.
+ */
+export function overviewNumbers(D, people) {
+  const total = D.total || people.length;
+  const pct = total ? Math.round(((D.namedCompany || 0) / total) * 100) : 0;
+  const topBands = SEN_ORDER
+    .map((s, i) => ({ s, i, n: D.senCounts[i] || 0 }))
+    .filter(b => b.n && b.s !== 'Unstated')
+    .sort((a, b) => b.n - a.n)
+    .slice(0, 3);
+  const topFields = D.doms
+    .map((d, i) => ({ d, i, n: D.domCounts[i], share: total ? Math.round((D.domCounts[i] / total) * 100) : 0 }))
+    .filter(x => x.d !== 'Other' && x.d !== 'No headline')
+    .slice(0, 3);
+  let span = '';
+  const dates = people.map(p => p.connectedOn).filter(Boolean);
+  if (dates.length > 1) {
+    let lo = Infinity, hi = -Infinity;
+    for (const t of dates) { if (t < lo) lo = t; if (t > hi) hi = t; }
+    span = `${monthYear(lo)} – ${monthYear(hi)}`;
+  }
+  return { total, pct, topBands, topFields, span };
+}
+
 export function renderOverview({ D, people, world }) {
   const el = $('overview');
   if (!el) return;
 
-  const total = D.total || people.length;
-  const withEmployer = D.namedCompany || 0;
-  const pct = total ? Math.round((withEmployer / total) * 100) : 0;
+  const { total, pct, topBands, topFields, span } = overviewNumbers(D, people);
 
   // seniority as one stacked bar, ordered senior -> unstated
   const senTotal = D.senCounts.reduce((a, b) => a + b, 0) || 1;
@@ -26,24 +51,7 @@ export function renderOverview({ D, people, world }) {
     return `<span class="ov-seg" style="width:${w.toFixed(2)}%;background:${world.senColor[i]}" ` +
       `title="${esc(s)} · ${fmt(n)}"></span>`;
   }).join('');
-  const topBands = SEN_ORDER
-    .map((s, i) => ({ s, i, n: D.senCounts[i] || 0 }))
-    .filter(b => b.n && b.s !== 'Unstated')
-    .sort((a, b) => b.n - a.n)
-    .slice(0, 3);
-
-  const topFields = D.doms
-    .map((d, i) => ({ d, i, n: D.domCounts[i] }))
-    .filter(x => x.d !== 'Other' && x.d !== 'No headline')
-    .slice(0, 3);
   const topMax = topFields.length ? topFields[0].n : 1;
-
-  let span = '';
-  const dates = people.map(p => p.connectedOn).filter(Boolean);
-  if (dates.length > 1) {
-    const lo = Math.min(...dates), hi = Math.max(...dates);
-    span = `${monthYear(lo)} – ${monthYear(hi)}`;
-  }
 
   el.innerHTML =
     `<div class="ov-stats">` +
@@ -62,7 +70,7 @@ export function renderOverview({ D, people, world }) {
     (topFields.length
       ? `<div class="ov-fields"><span class="ov-k">Top fields</span>` +
         topFields.map((x, rank) => {
-          const share = total ? Math.round((x.n / total) * 100) : 0;
+          const share = x.share;
           const colour = world.domColor[x.i];
           return `<button type="button" class="ov-frow" data-di="${x.i}" title="Show only ${esc(x.d)}">` +
             `<span class="ov-rank">${rank + 1}</span>` +

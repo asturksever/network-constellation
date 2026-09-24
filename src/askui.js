@@ -17,6 +17,37 @@ import { understandQuestion } from './askllm.js';
 
 const PAGE = 12;            // rows drawn at a time; "Show more" adds another page
 
+/**
+ * Escaped text with the question's words wrapped in <mark> where they occur,
+ * so a row shows why it matched. A word matches at the start of a word and
+ * runs to its end: "recruit" marks "Recruiter".
+ */
+export function highlightTerms(text, terms) {
+  const words = (terms || []).filter(w => w.length > 2)
+    .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  if (!words.length || !text) return esc(text || '');
+  const re = new RegExp(`\\b(${words.join('|')})\\w*`, 'gi');
+  let out = '', last = 0, m;
+  while ((m = re.exec(text)) !== null) {
+    out += esc(text.slice(last, m.index)) + `<mark>${esc(m[0])}</mark>`;
+    last = m.index + m[0].length;
+  }
+  return out + esc(text.slice(last));
+}
+
+/**
+ * What a headline says beyond the role and employer already shown above it.
+ * The role is usually the headline's first clause; whatever follows is often
+ * where the matched words are. A headline that is only "Role at Company" —
+ * which is every headline the official export composes — adds nothing.
+ */
+export function headlineRest(p) {
+  let head = p.headline || '';
+  if (head && p.role && head.startsWith(p.role)) head = head.slice(p.role.length).replace(/^[\s|•·,@–—-]+/, '');
+  if (head && p.company && head.replace(/^at\s+/i, '').trim() === p.company) head = '';
+  return head;
+}
+
 export function wireAsk({ world, D, people, ui }) {
   // Set by main.js once the key panel exists; until then there is simply no key.
   const api = {};
@@ -254,19 +285,7 @@ export function wireAsk({ world, D, people, ui }) {
     mark();
   }
 
-  /** Wrap the question's words where they occur, so a row shows why it matched. */
-  function highlight(text) {
-    const words = (lastFilter?.terms || []).filter(w => w.length > 2)
-      .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    if (!words.length || !text) return esc(text || '');
-    const re = new RegExp(`\\b(${words.join('|')})\\w*`, 'gi');
-    let out = '', last = 0, m;
-    while ((m = re.exec(text)) !== null) {
-      out += esc(text.slice(last, m.index)) + `<mark>${esc(m[0])}</mark>`;
-      last = m.index + m[0].length;
-    }
-    return out + esc(text.slice(last));
-  }
+  const highlight = text => highlightTerms(text, lastFilter?.terms);
 
   const initials = name => (name || '?').split(/\s+/).filter(Boolean).slice(0, 2)
     .map(w => w[0].toUpperCase()).join('');
@@ -275,11 +294,7 @@ export function wireAsk({ world, D, people, ui }) {
     const di = D.doms.indexOf(p.domain);
     const colour = di >= 0 ? world.domColor[di] : '#636366';
     const subtitle = [p.role, p.company].filter(Boolean).join(' · ');
-    // The role is usually the headline's first clause; show whatever the
-    // headline adds beyond it, which is often where the matched words are.
-    let head = !degraded && p.headline ? p.headline : '';
-    if (head && p.role && head.startsWith(p.role)) head = head.slice(p.role.length).replace(/^[\s|•·,@–—-]+/, '');
-    if (head && p.company && head.replace(/^at\s+/i, '').trim() === p.company) head = '';
+    const head = degraded ? '' : headlineRest(p);
     // Only the reasons that say something the question did not: the field the
     // question asked for, and the words already highlighted, are dropped.
     const asked = new Set(lastFilter?.subjects || []);

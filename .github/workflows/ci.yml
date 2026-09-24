@@ -19,3 +19,7 @@ jobs:
         run: npm run check
       - name: Unit tests
         run: npm test
+      # The bundler is where two modules declaring the same top-level name is
+      # caught — legal in the browser, a SyntaxError in the flattened file.
+      - name: Single-file build
+        run: npm run bundle:demo
