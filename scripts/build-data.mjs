@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// data/followers.csv  ->  data/graph-data.json  (+ data/people.json)
+// data/Connections.csv  ->  data/graph-data.json  (+ data/people.json)
 //
 //   node scripts/build-data.mjs [input.csv] [output.json]
 //
@@ -11,7 +11,11 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { parseCSV, decodeCsv } from '../src/csv.js';
 import { deNote, buildGraph, detectColumns, columnsUsable, BuildError } from '../src/build.js';
 
-const IN = process.argv[2] || 'data/followers.csv';
+// LinkedIn's export is Connections.csv; followers.csv is the name the headline
+// export used to go by, and is still picked up if that is what is there.
+const IN = process.argv[2] ||
+  ['data/Connections.csv', 'data/connections.csv', 'data/followers.csv'].find(f => existsSync(f)) ||
+  'data/Connections.csv';
 const OUT = process.argv[3] || 'data/graph-data.json';
 // The rich classified objects, headlines and all, beside the compact payload.
 // data/ is gitignored as a whole directory, so this never ships anywhere.

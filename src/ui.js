@@ -54,7 +54,7 @@ export function wireUI(world, D, hit) {
   segButtons.forEach(b => b.addEventListener('click', () => {
     segButtons.forEach(o => o.setAttribute('aria-pressed', String(o === b)));
     world.setDensity(b.dataset.d);
-    say('Settling...');
+    say('Settling…');
   }));
 
   /* ---- colour by ---- */
@@ -82,7 +82,7 @@ export function wireUI(world, D, hit) {
   /* ---- employer links ---- */
   $('compToggle').addEventListener('change', e => {
     world.setShowComp(e.target.checked);
-    say('Settling...');
+    say('Settling…');
   });
 
   /* ---- search ----
@@ -240,7 +240,7 @@ function row(color, label, count, di) {
 function tipHtml(n, D) {
   if (n.t === 'root') {
     return '<span class="tn">' + esc(n.name) + '</span>' +
-      '<span class="tr">Everyone here follows this account</span>';
+      '<span class="tr">The centre. Everyone else here is one of your connections</span>';
   }
   if (n.t === 'dom') {
     return `<span class="tn">${esc(n.name)}</span>` +

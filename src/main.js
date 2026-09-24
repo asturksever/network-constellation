@@ -76,7 +76,7 @@ async function loadDemo() {
     // The sample's profile links are made up, and a made-up slug can belong to
     // a real stranger. The demo has no links at all rather than risk that.
     const rows = parseCSV(deNote(text)).map(({ URL, ...rest }) => rest);
-    return buildGraph(rows, { generatedAt: 'Demo' });
+    return buildGraph(rows);
   } catch (err) {
     console.warn('The demo could not be loaded.', err);
     return null;
