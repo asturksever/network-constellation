@@ -155,12 +155,12 @@ export function createDetail({ world, D, people, ui, getEmployers, getKey, enric
           : '') +
       `</div>` +
 
-      // the enrich card sits right under the header, where it is seen
-      `<div class="d-enrich" id="dResearch"></div>` +
-
       (p.headline && p.headline !== p.role
         ? sec('Headline', `<span class="d-text">${esc(p.headline)}</span>`)
         : '') +
+
+      // the enrich card follows the headline, so it reads as the next step
+      `<div class="d-enrich" id="dResearch"></div>` +
 
       employerBlock(p.company) +
 
