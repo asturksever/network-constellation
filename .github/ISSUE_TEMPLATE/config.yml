@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Your first session (tutorial)
+    url: https://github.com/asturksever/network-constellation/blob/main/docs/tutorial.md
+    about: A ten-minute walkthrough of everything, on the demo.
+  - name: Install, self-host and troubleshooting
+    url: https://github.com/asturksever/network-constellation/blob/main/docs/install.md
+    about: Every message the app can show, and what to do about it.

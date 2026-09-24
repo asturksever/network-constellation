@@ -1,0 +1,40 @@
+name: A field is wrong, or people land in "Other"
+description: The classifier put people in the wrong cluster, or none.
+labels: [taxonomy]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The classifier is a readable list of patterns in `src/taxonomy.js`, and it is wrong in ways
+        only someone with a different network can see — so this is the most useful kind of report.
+        **Write job titles in your own words or change them slightly; never paste a real person's
+        headline with their name.**
+  - type: textarea
+    id: examples
+    attributes:
+      label: Example titles
+      description: A few job titles or headline fragments, one per line, that land in the wrong place.
+      placeholder: |
+        Hydrographic Surveyor
+        Head of Carbon Markets
+    validations:
+      required: true
+  - type: input
+    id: expected
+    attributes:
+      label: Where they should go
+      description: An existing field, or a new one you'd propose.
+      placeholder: Surveying, Drone & LiDAR — or a new "Carbon & Energy Markets"
+    validations:
+      required: true
+  - type: input
+    id: got
+    attributes:
+      label: Where they went
+      placeholder: Other
+  - type: checkboxes
+    id: pr
+    attributes:
+      label: Contributing
+      options:
+        - label: I'd like to open a pull request to src/taxonomy.js myself

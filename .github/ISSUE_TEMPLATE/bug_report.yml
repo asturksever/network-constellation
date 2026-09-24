@@ -1,0 +1,49 @@
+name: Something is broken
+description: The page does something wrong, shows an error, or does nothing.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Please don't paste names, headlines or rows from your own export** —
+        they are other people's details. Reproduce with the demo if you can, or describe the shape of
+        the data instead ("a headline with two @ signs").
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the demo
+        2. Ask "…"
+        3. …
+  - type: dropdown
+    id: data
+    attributes:
+      label: Which data
+      options:
+        - The demo
+        - LinkedIn's Connections.csv
+        - Another CSV
+        - A single-file bundle
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS
+      placeholder: Chrome 140 on macOS 26
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Messages
+      description: The status line or landing message, and anything red in the browser console (View → Developer → JavaScript Console). Remove any names first.
+      render: text
