@@ -106,6 +106,21 @@ function makeWorld(D, opts = {}) {
   return world;
 }
 
+/**
+ * Offline development: `npm run vendor` keeps a copy of the 3D library in
+ * vendor/, used when the CDN one could not be loaded. Only ever on localhost;
+ * vendor/ is gitignored, so it is never on the public site.
+ */
+function loadLocalLibrary() {
+  if (typeof ForceGraph3D !== 'undefined' || !LOCAL) return Promise.resolve();
+  return new Promise(resolve => {
+    const script = document.createElement('script');
+    script.src = 'vendor/3d-force-graph.min.js';
+    script.onload = script.onerror = () => resolve();
+    document.head.appendChild(script);
+  });
+}
+
 let app = null;        // the running app, once one has started
 let starting = null;   // ...and the promise of it, so two clicks start one
 
@@ -126,7 +141,7 @@ const boot = async () => {
     }
   });
 
-  const found = await findGraph();
+  const [found] = await Promise.all([findGraph(), loadLocalLibrary()]);
   if (found) {
     landing.hide();
     starting = start(found, landing);

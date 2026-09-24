@@ -8,7 +8,7 @@
 //   node scripts/dev-server.mjs [port] --bare    as GitHub Pages will serve it
 //
 // --bare answers 404 for everything that is gitignored and so never reaches
-// the public site — data/, logos/, dist/ — which is the only way to see the
+// the public site — data/, logos/, dist/, vendor/ — which is the only way to see the
 // landing page and the demo on a machine that has a real graph on disk. Run
 // it on its own port: a different origin also means empty browser storage,
 // which is what a first visitor has.
@@ -21,7 +21,7 @@ const ROOT = resolve('.');
 const args = process.argv.slice(2);
 const BARE = args.includes('--bare');
 const PORT = Number(args.find(a => /^\d+$/.test(a)) || process.env.PORT || 8080);
-const PRIVATE = /^\/(data|logos|dist)\//;
+const PRIVATE = /^\/(data|logos|dist|vendor)\//;
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
