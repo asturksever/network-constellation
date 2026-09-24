@@ -5,7 +5,7 @@
 // "upload" is avoided in the copy for that reason.
 
 import { $, esc, fmt } from './dom.js';
-import { parseCSV } from './csv.js';
+import { parseCSV, decodeCsv } from './csv.js';
 import { deNote, buildGraph, detectColumns, columnsUsable, BuildError } from './build.js';
 import { saveGraph, requestPersistence, storeProblem } from './store.js';
 
@@ -43,6 +43,7 @@ export function createLanding({ onBuilt } = {}) {
   let rows = null;
   let columns = null;
   let sourceName = '';
+  let encodingNote = '';
   let openDemo = null;
   let accepting = true;     // false in a single-file build that carries its own graph
 
@@ -75,22 +76,38 @@ export function createLanding({ onBuilt } = {}) {
 
   /* ---- reading a file ---- */
 
+  // What to do instead, for the files that are not a CSV but get dropped anyway.
+  const NOT_CSV = {
+    'linkedin-zip': ['That is LinkedIn’s whole download.', 'Unzip it and drop the Connections.csv from inside.'],
+    xlsx: ['That is an Excel workbook.', 'Open it in Excel or Numbers and save it as CSV (in Excel, File → Save As → CSV UTF-8), then drop that.'],
+    xls: ['That is an older Excel workbook.', 'Open it and save it as CSV (in Excel, File → Save As → CSV UTF-8), then drop that.'],
+    zip: ['That is a zip archive.', 'Unzip it and drop the CSV from inside.']
+  };
+
   async function take(file) {
     sourceName = file.name;
     say(`<span class="ls-mono">Reading ${esc(file.name)}…</span>`);
-    let text;
+    let decoded;
     try {
-      text = await file.text();
+      decoded = decodeCsv(new Uint8Array(await file.arrayBuffer()));
     } catch (err) {
       say(`<span class="ls-mono">Could not read that file.</span>`, 'bad');
       console.error(err);
       return;
     }
-    takeText(text, file.name);
+    if (decoded.kind) {
+      const [what, next] = NOT_CSV[decoded.kind];
+      say(`<span class="ls-mono">${esc(what)}</span><span class="ls-note">${esc(next)}</span>`, 'bad');
+      return;
+    }
+    takeText(decoded.text, file.name, decoded.encoding);
   }
 
-  function takeText(text, name) {
+  function takeText(text, name, encoding = 'utf-8') {
     sourceName = name;
+    encodingNote = encoding === 'windows-1252'
+      ? 'This file is not UTF-8, so it was read as Windows-1252, which is what Excel saves. If accented names look wrong below, save it again as “CSV UTF-8”.'
+      : '';
     try {
       rows = parseCSV(deNote(text));
     } catch (err) {
@@ -109,15 +126,23 @@ export function createLanding({ onBuilt } = {}) {
 
   /* ---- what we think the columns are ---- */
 
+  /** The first person's name as it will be shown, so a bad decode is visible before building. */
+  function firstName() {
+    const r = rows[0];
+    if (columns.name) return r[columns.name] || '';
+    return [r[columns.first], r[columns.last]].filter(Boolean).join(' ');
+  }
+
   function summarise() {
     const named = ROLES
       .filter(([k]) => columns[k])
       .map(([k, label]) => `<span class="col"><span class="col-k">${label}</span>${esc(columns[k])}</span>`)
       .join('');
     say(
-      `<div class="ls-head"><span class="ls-mono">${fmt(rows.length)} rows · ${esc(sourceName)}</span>` +
+      `<div class="ls-head"><span class="ls-mono">${fmt(rows.length)} ${rows.length === 1 ? 'row' : 'rows'} · ${esc(sourceName)}</span>` +
       `<button type="button" class="linky" id="remap">Change columns</button></div>` +
       `<div class="cols">${named}</div>` +
+      (encodingNote ? `<span class="ls-note">${esc(encodingNote)} First row: <strong>${esc(firstName())}</strong></span>` : '') +
       (columns.headline
         ? ''
         : '<span class="ls-note">No headline column, so one is composed as “Position at Company”. That is what the official export gives you and it classifies fine.</span>') +

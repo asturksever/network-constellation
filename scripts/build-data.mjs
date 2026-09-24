@@ -8,7 +8,7 @@
 // reads, writes and reports.
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { parseCSV } from '../src/csv.js';
+import { parseCSV, decodeCsv } from '../src/csv.js';
 import { deNote, buildGraph, detectColumns, columnsUsable, BuildError } from '../src/build.js';
 
 const IN = process.argv[2] || 'data/followers.csv';
@@ -24,7 +24,13 @@ if (!existsSync(IN)) {
   process.exit(1);
 }
 
-const rows = parseCSV(deNote(readFileSync(IN, 'utf8')));
+const decoded = decodeCsv(readFileSync(IN));
+if (decoded.kind) {
+  console.error(`${IN} is not a CSV (${decoded.kind}). Export or unzip Connections.csv and point at that.`);
+  process.exit(1);
+}
+if (decoded.encoding !== 'utf-8') console.warn(`Read ${IN} as ${decoded.encoding}.`);
+const rows = parseCSV(deNote(decoded.text));
 if (!rows.length) { console.error('No rows in ' + IN); process.exit(1); }
 
 const columns = detectColumns(rows[0]);
