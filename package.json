@@ -7,6 +7,9 @@
   "engines": {
     "node": ">=18"
   },
+  "bin": {
+    "network-constellation-mcp": "mcp/server.mjs"
+  },
   "scripts": {
     "data": "node scripts/build-data.mjs",
     "dev": "node scripts/dev-server.mjs 8080",
@@ -14,8 +17,9 @@
     "bundle:demo": "node scripts/bundle.mjs --no-data",
     "vendor": "mkdir -p vendor && curl -sL https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js -o vendor/3d-force-graph.min.js",
     "logos": "node scripts/fetch-logos.mjs",
-    "check": "for f in src/*.js scripts/*.mjs; do node --check \"$f\" || exit 1; done",
+    "check": "for f in src/*.js scripts/*.mjs mcp/*.mjs; do node --check \"$f\" || exit 1; done",
     "test": "node --test test/*.test.mjs",
-    "pages": "node scripts/dev-server.mjs 8090 --bare"
+    "pages": "node scripts/dev-server.mjs 8090 --bare",
+    "mcp": "node mcp/server.mjs"
   }
 }

@@ -19,6 +19,7 @@ npm run dev      # http://localhost:8080 (scripts/dev-server.mjs, sends no-store
 npm run pages    # http://localhost:8090 as GitHub Pages serves it: data/ logos/ dist/ vendor/ 404
 npm run bundle   # -> dist/network-constellation.html: YOUR graph inlined, never publish
 npm run bundle:demo  # -> dist/network-constellation-demo.html: landing + demo only, safe to share
+npm run mcp -- --csv path/to/Connections.csv   # the MCP server on stdio (see docs/mcp.md)
 npm run vendor   # optional: vendor/ copy of the force-graph lib, used on localhost when the CDN fails
 ```
 
@@ -53,6 +54,8 @@ src/research.js       web research of a person, click-only; the one call that se
 src/overview.js       the network overview at the top of the control panel
 src/detail.js         side panel for people and employer hubs
 src/main.js           boot: a stored/disk graph, or the landing with the demo turning behind it
+mcp/server.mjs             MCP server (stdio, hand-written JSON-RPC, no SDK); bin: network-constellation-mcp
+mcp/network.mjs            the six read-only tools over build.js + ask.js; never returns emails, links only with --include-links
 scripts/dev-server.mjs     static server with no-store; --bare hides the gitignored dirs
 scripts/build-data.mjs     CSV -> compact graph JSON (a thin wrapper over build.js)
 scripts/fetch-logos.mjs    employer name -> domain -> favicon -> logos/
@@ -207,6 +210,23 @@ placed; the answer reports that count rather than swallowing it. Organisation
 type never excludes anyone, but it does satisfy the function gate, because
 "Partner" at a firm identified as a venture capital firm is exactly who the
 question means and their headline will never say "invest".
+
+## The MCP server
+
+`mcp/` lets AI tools query a user's network: `npx -y
+github:asturksever/network-constellation --csv …` runs `mcp/server.mjs`
+through the `bin` entry. It speaks MCP directly (newline-delimited JSON-RPC on
+stdio: `initialize`, `ping`, `tools/list`, `tools/call`) instead of using the
+SDK, so the repo keeps zero dependencies and `npx` has nothing to install.
+stdout is the protocol channel; log to stderr only.
+
+It is the one place where people's details leave the machine by design: tool
+results go into the user's AI conversation. So the tools return the minimum
+that answers the question. No email ever. Profile links only with
+`--include-links`. And only the people a question matches, paginated. Keep
+that contract, and keep docs/mcp.md's privacy section in step with it. Tool
+errors (bad field, no file) are returned as `isError` results with a message
+that says how to fix it, not as protocol errors, so the model can recover.
 
 ## Roadmap
 

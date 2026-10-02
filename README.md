@@ -43,8 +43,26 @@ need an introduction.
 | **[Your first session →](docs/tutorial.md)** | A ten-minute walkthrough of everything, on the demo, with screenshots. |
 | **[Install and self-host →](docs/install.md)** | Run it locally, build a single file, put your own copy on GitHub Pages, and troubleshooting. |
 | **[How questions are answered →](docs/ask-your-graph.md)** | How a question becomes a filter, with measured results. |
+| **[Ask from your AI tools (MCP) →](docs/mcp.md)** | Use your network from Claude, Cursor, VS Code and other MCP clients. |
 
 ![The landing page: the demo turning behind the drop zone](docs/img/landing.png)
+
+## Ask from your AI tools (MCP)
+
+The same engine also runs as an MCP server, so Claude, Cursor, VS Code and
+other AI tools can answer questions about your network in the chat, like
+*"who do I know at Esri?"* or *"which three VCs do I know best?"*. Point it at
+your export:
+
+```bash
+claude mcp add network-constellation --scope user -- npx -y github:asturksever/network-constellation --csv /full/path/to/Connections.csv
+```
+
+It runs on your machine and reads only that file, but **what it returns (the
+names, titles and employers of the people a question matches) is sent to your
+AI tool's provider as part of the conversation.** It never returns email
+addresses, and returns profile links only if you ask it to. Setup for every
+client, and the six tools: [docs/mcp.md](docs/mcp.md).
 
 ## Privacy
 
@@ -76,6 +94,9 @@ browser, so nothing is paid for twice. Your key is kept only if you tick
 What that costs: about $0.06 to place the employers that two or more of your
 connections share, in a 10,000-person network. About $0.70 to place all of
 them. $0.10–$0.30 for each **Enrich profile**.
+
+The MCP server is separate from the page and has its own trade-off, described
+[above](#ask-from-your-ai-tools-mcp) and in [docs/mcp.md](docs/mcp.md).
 
 `npm run logos` is a separate, optional build step on your own machine. It
 sends domain guesses made from employer names to unavatar.io, DuckDuckGo and
@@ -153,6 +174,8 @@ src/askllm.js       question -> extra filter constraints
 src/research.js     one person -> a sourced brief, on a button only
 src/enrichui.js     the Settings sheet
 src/main.js         boot: find a graph or show the landing, then wire it all
+mcp/server.mjs      the MCP server: JSON-RPC over stdio, six read-only tools
+mcp/network.mjs     what those tools do, over the same build and ask modules
 scripts/            the dev server, the data build, logos and the bundler
 test/               node:test, no framework
 ```
