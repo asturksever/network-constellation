@@ -67,3 +67,19 @@ test('speaks MCP over stdio: initialize, tools/list, tools/call', async () => {
   assert.equal(by(4).result.isError, true, 'a bad argument is a tool error the model can read, not a protocol error');
   assert.equal(by(5).error.code, -32601);
 });
+
+test('the Claude Desktop extension packs every module the server imports', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { dirname, join, normalize } = await import('node:path');
+  const listed = new Set(JSON.parse(readFileSync('scripts/build-mcpb.mjs', 'utf8').match(/const MODULES = (\[[^\]]*\])/)[1].replace(/'/g, '"')));
+  const needed = new Set();
+  const walk = file => {
+    for (const [, rel] of readFileSync(file, 'utf8').matchAll(/from '(\.[^']+)'/g)) {
+      const dep = normalize(join(dirname(file), rel));
+      if (dep.startsWith('src/') && !needed.has(dep)) { needed.add(dep); walk(dep); }
+      else if (dep.startsWith('mcp/')) walk(dep);
+    }
+  };
+  walk('mcp/server.mjs');
+  assert.deepEqual([...needed].sort(), [...listed].sort(), 'MODULES in scripts/build-mcpb.mjs must match what the server imports');
+});

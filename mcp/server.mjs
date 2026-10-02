@@ -38,7 +38,7 @@ Configure it in your MCP client; see docs/mcp.md.
   process.exit(0);
 }
 const CSV = value('--csv') || process.env.NC_CSV;
-const LINKS = flag('--include-links') || process.env.NC_INCLUDE_LINKS === '1';
+const LINKS = flag('--include-links') || ['1', 'true'].includes(String(process.env.NC_INCLUDE_LINKS).toLowerCase());
 const log = (...a) => process.stderr.write('[network-constellation] ' + a.join(' ') + '\n');
 
 // Read lazily, once: a bad path becomes a tool error the AI can explain,

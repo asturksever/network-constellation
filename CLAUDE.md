@@ -20,6 +20,7 @@ npm run pages    # http://localhost:8090 as GitHub Pages serves it: data/ logos/
 npm run bundle   # -> dist/network-constellation.html: YOUR graph inlined, never publish
 npm run bundle:demo  # -> dist/network-constellation-demo.html: landing + demo only, safe to share
 npm run mcp -- --csv path/to/Connections.csv   # the MCP server on stdio (see docs/mcp.md)
+npm run mcpb     # -> dist/network-constellation.mcpb, the Claude Desktop extension (attach to a release)
 npm run vendor   # optional: vendor/ copy of the force-graph lib, used on localhost when the CDN fails
 ```
 
@@ -59,6 +60,7 @@ mcp/network.mjs            the six read-only tools over build.js + ask.js; never
 scripts/dev-server.mjs     static server with no-store; --bare hides the gitignored dirs
 scripts/build-data.mjs     CSV -> compact graph JSON (a thin wrapper over build.js)
 scripts/fetch-logos.mjs    employer name -> domain -> favicon -> logos/
+scripts/build-mcpb.mjs     stage mcp/ + the five pure src modules, write the MCPB manifest, validate and pack
 scripts/bundle.mjs         flatten everything into one HTML file (--no-data for the demo build)
 docs/                      tutorial.md, install.md, ask-your-graph.md; img/ holds demo-only screenshots
 ```
@@ -227,6 +229,17 @@ that answers the question. No email ever. Profile links only with
 that contract, and keep docs/mcp.md's privacy section in step with it. Tool
 errors (bad field, no file) are returned as `isError` results with a message
 that says how to fix it, not as protocol errors, so the model can recover.
+
+`npm run mcpb` packages the same server as a Claude Desktop extension. It
+copies only `mcp/` and the modules the server imports (`csv`, `build`,
+`classify`, `taxonomy`, `ask`), so if `network.mjs` ever imports another
+`src/` module, add it to `MODULES` in `scripts/build-mcpb.mjs` or the extension
+will fail to start. The user picks their CSV in Claude Desktop (a `file`
+`user_config`), and the profile-links toggle arrives as
+`NC_INCLUDE_LINKS=true|false`. The official `@anthropic-ai/mcpb` CLI validates
+and packs it through `npx`, at build time only. Publish by attaching
+`dist/network-constellation.mcpb` to a GitHub release under exactly that name:
+the docs link to `releases/latest/download/network-constellation.mcpb`.
 
 ## Roadmap
 

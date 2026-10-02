@@ -51,8 +51,12 @@ need an introduction.
 
 The same engine also runs as an MCP server, so Claude, Cursor, VS Code and
 other AI tools can answer questions about your network in the chat, like
-*"who do I know at Esri?"* or *"which three VCs do I know best?"*. Point it at
-your export:
+*"who do I know at Esri?"* or *"which three VCs do I know best?"*.
+
+**Claude Desktop:** download
+[network-constellation.mcpb](https://github.com/asturksever/network-constellation/releases/latest/download/network-constellation.mcpb),
+double-click it, and choose your Connections.csv. **Everything else**, for
+example Claude Code:
 
 ```bash
 claude mcp add network-constellation --scope user -- npx -y github:asturksever/network-constellation --csv /full/path/to/Connections.csv
@@ -138,6 +142,7 @@ npm run dev            # http://localhost:8080
 npm test               # the tests
 npm run pages          # the site as GitHub Pages serves it, on :8090
 npm run bundle:demo    # one self-contained HTML file with the demo, safe to share
+npm run mcpb           # the Claude Desktop extension, dist/network-constellation.mcpb
 npm run bundle         # the same with YOUR graph inside: keep it to yourself
 ```
 
@@ -176,6 +181,7 @@ src/enrichui.js     the Settings sheet
 src/main.js         boot: find a graph or show the landing, then wire it all
 mcp/server.mjs      the MCP server: JSON-RPC over stdio, six read-only tools
 mcp/network.mjs     what those tools do, over the same build and ask modules
+mcp/icon.png        the Claude Desktop extension's icon
 scripts/            the dev server, the data build, logos and the bundler
 test/               node:test, no framework
 ```

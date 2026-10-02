@@ -47,6 +47,19 @@ that setting applies to these answers too.
 
 ## Set it up
 
+### Claude Desktop: one click
+
+1. Download **[network-constellation.mcpb](https://github.com/asturksever/network-constellation/releases/latest/download/network-constellation.mcpb)**.
+2. Double-click it. Claude Desktop opens it and asks you to install.
+3. When it asks for **LinkedIn Connections.csv**, choose your file (see below
+   for how to get it).
+
+You don't need Node, git or a config file: Claude Desktop runs the extension
+on its own built-in runtime. To change the file later, or to turn on profile
+links, open **Settings → Extensions → Network Constellation**.
+
+### Any other client, or by hand
+
 You need [Node.js](https://nodejs.org) 18 or newer and git. Then get your
 export, if you haven't: on LinkedIn, open
 [Get a copy of your data](https://www.linkedin.com/mypreferences/d/download-my-data),
@@ -64,9 +77,9 @@ seconds, and caches it after that. There are no dependencies to install. Or
 clone the repo and run `node /path/to/network-constellation/mcp/server.mjs
 --csv …` instead.
 
-### Claude Desktop
+### Claude Desktop, by hand
 
-**Settings → Developer → Edit Config** opens `claude_desktop_config.json`.
+If you'd rather not use the extension, **Settings → Developer → Edit Config** opens `claude_desktop_config.json`.
 Add:
 
 ```json

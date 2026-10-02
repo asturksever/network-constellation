@@ -1,6 +1,6 @@
 {
   "name": "network-constellation",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A 3D force-directed view of your LinkedIn connections, clustered by what people do.",
   "type": "module",
   "license": "MIT",
@@ -20,6 +20,7 @@
     "check": "for f in src/*.js scripts/*.mjs mcp/*.mjs; do node --check \"$f\" || exit 1; done",
     "test": "node --test test/*.test.mjs",
     "pages": "node scripts/dev-server.mjs 8090 --bare",
-    "mcp": "node mcp/server.mjs"
+    "mcp": "node mcp/server.mjs",
+    "mcpb": "node scripts/build-mcpb.mjs"
   }
 }
