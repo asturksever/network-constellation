@@ -49,22 +49,39 @@ that setting applies to these answers too.
 
 ### Claude Desktop: one click
 
-1. Download **[network-constellation.mcpb](https://github.com/asturksever/network-constellation/releases/latest/download/network-constellation.mcpb)**.
-2. Double-click it. Claude Desktop opens it and asks you to install.
-3. When it asks for **LinkedIn Connections.csv**, choose your file (see below
-   for how to get it).
+1. [Get your export](#get-your-export) and unzip it, so you have
+   `Connections.csv` on your disk.
+2. Download **[network-constellation.mcpb](https://github.com/asturksever/network-constellation/releases/latest/download/network-constellation.mcpb)**.
+3. Double-click it. Claude Desktop opens it and asks you to install.
+4. When it asks for **LinkedIn Connections.csv**, choose `Connections.csv`.
+   The picker usually opens in Downloads, right next to the extension file,
+   so take care not to pick `network-constellation.mcpb` itself.
+5. Check that the extension is switched on in **Settings → Extensions**.
+6. Start a **new** chat. **Network Constellation** should be listed in the
+   chat's tools menu. Then ask, for example, *"who in my LinkedIn network
+   works at Esri?"*
 
 You don't need Node, git or a config file: Claude Desktop runs the extension
 on its own built-in runtime. To change the file later, or to turn on profile
-links, open **Settings → Extensions → Network Constellation**.
+links, open **Settings → Extensions → Network Constellation → Configure**.
+
+Claude chooses among all the tools it has. If it also has email or calendar
+connected, it may search those first. Saying "my LinkedIn network" or "use
+Network Constellation" in the question settles it.
+
+### Get your export
+
+On LinkedIn, open
+[Get a copy of your data](https://www.linkedin.com/mypreferences/d/download-my-data),
+tick **Connections**, and request the archive. LinkedIn emails you when it is
+ready, usually within ten minutes. Unzip it, and put `Connections.csv` somewhere it
+will stay.
 
 ### Any other client, or by hand
 
-You need [Node.js](https://nodejs.org) 18 or newer and git. Then get your
-export, if you haven't: on LinkedIn, open
-[Get a copy of your data](https://www.linkedin.com/mypreferences/d/download-my-data),
-tick **Connections**, and unzip the download. Put `Connections.csv` somewhere
-stable, and use its **full path** below. `~/` works too.
+You need [Node.js](https://nodejs.org) 18 or newer, git, and
+[your export](#get-your-export). Use the **full path** to `Connections.csv`
+below; a path starting with `~/` works too.
 
 Every client runs the same command:
 
@@ -102,8 +119,13 @@ Windows, use `"command": "cmd"` and put `"/c", "npx",` at the start of `args`.
 claude mcp add network-constellation --scope user -- npx -y github:asturksever/network-constellation --csv /full/path/to/Connections.csv
 ```
 
-`--scope user` makes it available in every project. Check it with `claude mcp
+`--scope user` makes it available in every project. Without it, the server is
+only available in the folder you ran the command in. Check it with `claude mcp
 list`.
+
+Claude Code and Claude Desktop keep separate lists. A server added here does
+not appear in the desktop app's chats, and the desktop extension does not
+appear here.
 
 ### Cursor
 
@@ -159,7 +181,9 @@ args = ["-y", "github:asturksever/network-constellation", "--csv", "/full/path/t
 | `--include-links` | Also return LinkedIn profile links (`NC_INCLUDE_LINKS=1` does the same). Off by default. |
 
 When you download a newer export, replace the file and restart your client.
-The server reads the file once, when it is first asked something.
+The server reads the file once, when it is first asked something. In Claude
+Desktop, choose the new file under **Configure**, then switch the extension
+off and on again.
 
 ## The tools
 
@@ -195,10 +219,27 @@ one starting with `~/`.
 **"That is LinkedIn's whole download."** Unzip it and point `--csv` at the
 `Connections.csv` inside.
 
-**The tools never appear.** Check that `node --version` is 18 or newer and
-that `git` is installed: `npx` needs git to fetch from GitHub. Claude Desktop
-writes server logs to `~/Library/Logs/Claude/mcp*.log` on macOS and
-`%APPDATA%\Claude\logs` on Windows. The server logs only to stderr, so its
+**"The file chosen is the extension itself."** In Claude Desktop, the
+extension was given `network-constellation.mcpb` as its CSV. Open
+**Settings → Extensions → Network Constellation → Configure** and choose
+`Connections.csv` instead.
+
+**The extension is installed but switched off.** Claude Desktop won't start
+an extension until its required settings are filled in. Choose your CSV under
+**Configure**, then switch it on.
+
+**Claude answers from email, memory or the web instead.** Network
+Constellation isn't in that chat's tools menu, or Claude chose another tool.
+Start a new chat after installing or changing the extension. Check that it's
+listed and switched on in the tools menu, and name it in the question: *"use
+Network Constellation: who do I know at Esri?"*
+
+**The tools never appear.** If you set it up by hand, check that `node
+--version` is 18 or newer and that `git` is installed: `npx` needs git to
+fetch from GitHub. Then look at the logs. Claude Desktop writes them to
+`~/Library/Logs/Claude/` on macOS and `%APPDATA%\Claude\logs` on Windows: the
+extension's own log is `mcp-server-Network Constellation.log`, and `main.log`
+says why an extension wasn't started. The server logs only to stderr, so its
 lines appear there.
 
 **Test it without a client:**

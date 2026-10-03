@@ -255,4 +255,4 @@ long, a desktop is more comfortable.
 
 ---
 
-Next: [Install and self-host](install.md) · [How questions are answered](ask-your-graph.md) · [Back to the README](../README.md)
+Next: [Install and self-host](install.md) · [How questions are answered](ask-your-graph.md) · [Ask from your AI tools](mcp.md) · [Back to the README](../README.md)

@@ -55,8 +55,8 @@ other AI tools can answer questions about your network in the chat, like
 
 **Claude Desktop:** download
 [network-constellation.mcpb](https://github.com/asturksever/network-constellation/releases/latest/download/network-constellation.mcpb),
-double-click it, and choose your Connections.csv. **Everything else**, for
-example Claude Code:
+double-click it, choose your Connections.csv (not the `.mcpb` itself), and
+start a new chat. **Everything else**, for example Claude Code:
 
 ```bash
 claude mcp add network-constellation --scope user -- npx -y github:asturksever/network-constellation --csv /full/path/to/Connections.csv
