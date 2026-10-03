@@ -73,7 +73,7 @@ const manifest = {
     connections_csv: {
       type: 'file',
       title: 'LinkedIn Connections.csv',
-      description: 'The Connections.csv from LinkedIn’s data export (unzipped). Read on this computer only.',
+      description: 'Choose Connections.csv, the file inside LinkedIn’s data export once unzipped (not this extension file). It is read on this computer only.',
       required: true
     },
     include_links: {

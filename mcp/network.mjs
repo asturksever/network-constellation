@@ -30,6 +30,10 @@ export function loadNetwork(csvPath, { includeLinks = false } = {}) {
   const path = resolve(csvPath.replace(/^~(?=\/|$)/, process.env.HOME || '~'));
   if (!existsSync(path)) throw new NetworkError(`No file at ${path}. Check the --csv path in your MCP config.`);
 
+  if (/\.(mcpb|dxt)$/i.test(path)) {
+    throw new NetworkError(`The file chosen is the extension itself (${path}). In Claude Desktop, open Settings → Extensions → ` +
+      'Network Constellation and choose your LinkedIn Connections.csv instead.');
+  }
   const decoded = decodeCsv(readFileSync(path));
   if (decoded.kind === 'linkedin-zip') throw new NetworkError(`${path} is LinkedIn's whole download. Unzip it and point --csv at the Connections.csv inside.`);
   if (decoded.kind) throw new NetworkError(`${path} is not a CSV (it looks like ${decoded.kind}). Save or export it as CSV.`);

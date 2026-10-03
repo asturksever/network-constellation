@@ -83,3 +83,7 @@ test('the Claude Desktop extension packs every module the server imports', async
   walk('mcp/server.mjs');
   assert.deepEqual([...needed].sort(), [...listed].sort(), 'MODULES in scripts/build-mcpb.mjs must match what the server imports');
 });
+
+test('pointing the extension at itself gets a message that says so', () => {
+  assert.throws(() => loadNetwork('dist/network-constellation.mcpb'), /extension itself.*Connections\.csv/s);
+});
